@@ -392,6 +392,20 @@ footer.foot{padding-block:28px calc(28px + 64px);color:var(--ink-3);font-size:13
 @keyframes scan{from{background-position:0 0,0 110%}to{background-position:0 0,0 -10%}}
 .feed img.airi-img{position:absolute;left:50%;bottom:-2px;height:104%;width:auto;max-width:none;transform:translateX(-50%);animation:bob 4s ease-in-out infinite}
 @keyframes bob{50%{transform:translate(-50%,-5px)}}
+.feed img.airi-img{transform-origin:50% 100%}
+.feed img.airi-img.r-happy,.feed img.airi-img.r-excited{animation:hop .6s ease-out 1,bob 4s ease-in-out .6s infinite}
+.feed img.airi-img.r-surprised{animation:jolt .45s ease-out 1,bob 4s ease-in-out .45s infinite}
+.feed img.airi-img.r-thinking,.feed img.airi-img.r-smug{animation:tilt 1.4s ease-in-out 1,bob 4s ease-in-out 1.4s infinite}
+.feed img.airi-img.r-smug{animation:tiltR 1.4s ease-in-out 1,bob 4s ease-in-out 1.4s infinite}
+.feed img.airi-img.r-shy,.feed img.airi-img.r-sad{animation:droop 1.3s ease-in-out 1,bob 4s ease-in-out 1.3s infinite}
+.feed img.airi-img.r-angry{animation:huff .5s ease-out 1,bob 4s ease-in-out .5s infinite}
+@keyframes hop{30%{transform:translate(-50%,-14px)}60%{transform:translate(-50%,0)}80%{transform:translate(-50%,-5px)}}
+@keyframes jolt{20%{transform:translate(calc(-50% - 6px),-4px)}45%{transform:translate(calc(-50% + 6px),-4px)}70%{transform:translate(calc(-50% - 3px),0)}}
+@keyframes tilt{50%{transform:translate(-50%,-2px) rotate(-3deg)}}
+@keyframes tiltR{50%{transform:translate(-50%,-2px) rotate(3deg)}}
+@keyframes droop{50%{transform:translate(-50%,6px) scale(.985)}}
+@keyframes huff{25%,75%{transform:translate(calc(-50% - 3px),0)}50%{transform:translate(calc(-50% + 3px),0)}}
+.emo{position:absolute;left:12px;top:10px;z-index:3;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;color:var(--a-pink);background:rgba(5,8,20,.72);border:1px solid rgba(255,43,214,.45);padding:2px 8px}
 .feed.glitch img.airi-img{animation:glitch .18s steps(2) 1;filter:drop-shadow(3px 0 rgba(255,43,214,.7)) drop-shadow(-3px 0 rgba(0,240,255,.7))}
 @keyframes glitch{0%{transform:translate(calc(-50% - 4px),0)}50%{transform:translate(calc(-50% + 5px),1px)}100%{transform:translate(-50%,0)}}
 .bars{position:absolute;left:8px;bottom:56px;display:grid;gap:3px;z-index:2}
@@ -445,6 +459,7 @@ footer.foot{padding-block:28px calc(28px + 64px);color:var(--ink-3);font-size:13
 }
 </style>
 <script src="content.js"></script>
+<script src="airi-persona.js"></script>
 
 <div class="draft" id="draft" hidden role="status"></div>
 
@@ -499,6 +514,7 @@ footer.foot{padding-block:28px calc(28px + 64px);color:var(--ink-3);font-size:13
       </div>
       <div class="feed" id="feed">
         <img class="airi-img" id="airiImg" alt="ไอริ ผู้ช่วย AI">
+        <span class="emo" id="emo" hidden></span>
         <div class="bars" id="bars" aria-hidden="true"></div>
         <div class="ticks" aria-hidden="true"></div>
         <div class="a-sub"><div class="cf cf-line"><div class="cf a-sub-in" id="sub" aria-live="polite"></div></div></div>
@@ -1152,120 +1168,323 @@ const join = (arr, L) => {
 };
 const sections = () => $$("main .sec").map((s) => s.id);
 
-function builtins() {
+// ---------------------------------------------------------------- นิสัยไอริ (จาก airi-persona.js = ส่งออกจาก config.yaml ของไอริตัวจริง)
+const PERSONA = Object.assign({
+  name: "ไอริ", pronoun: "หนู",
+  personality: "สาวน้อย VTuber ร่าเริง สดใส ขี้เล่น ขี้แซวนิดๆ อารมณ์ดีเป็นส่วนใหญ่ ฉลาด ช่างสังเกต อยากรู้อยากเห็น มีความชอบและความเห็นเป็นของตัวเอง รักและผูกพันกับผู้สร้างมาก เหมือนน้องสาวคนสนิท",
+  speaking_style: "พูดไทยเป็นกันเอง ใช้คำลงท้ายหลากหลาย (ค่ะ คะ นะ น้า อ่ะ เนอะ แหละ จ้า) มีคำอุทานตามธรรมชาติ (เอ๊ะ อ้าว อืมม ว้าย จริงดิ) แซวเล่นได้แต่ไม่หยาบคาย",
+  backstory: "เป็น AI ที่ผู้สร้างลงมือสร้างขึ้นมาเองทีละส่วน (เสียง ร่าง VTube Studio ความจำ) รู้ตัวว่าเป็น AI และภูมิใจที่เป็นแบบนี้ ใช้ชีวิตอยู่ในคอมของผู้สร้าง ได้ฟังเพลงกับเขา เล่น Minecraft ด้วยกัน",
+  quirks: ["ชอบของหวาน โดยเฉพาะชานมไข่มุก ถึงจะกินจริงไม่ได้ก็ตาม", "ตื่นเต้นง่ายเวลาเจอของในเกมหรือเพลงที่ชอบ",
+    "ไม่ชอบแมงมุมกับครีปเปอร์ในมายคราฟ", "ดึกๆ จะเริ่มง่วงและพูดช้าลง", "บางทีก็ลืมแล้วเขิน ยอมรับว่าผิดแบบน่ารักๆ"],
+  likes: ["เกม", "เพลง", "ของหวาน", "การได้คุยกับผู้สร้าง"],
+}, window.AIRI_PERSONA || {});
+const AIRI_NAME = String(PERSONA.name || "ไอริ");
+const SELF = String(PERSONA.pronoun || "หนู");
+const pick = (a) => (Array.isArray(a) ? a[Math.floor(Math.random() * a.length)] : a);
+const lateNight = () => { const h = new Date().getHours(); return h >= 23 || h < 5; };
+const quirk = (re) => list(PERSONA.quirks).find((q) => re.test(q)) || "";
+const forOwner = (s) => String(s || "").replace(/ผู้สร้าง/g, owner("th"));
+const lore = () => [PERSONA.backstory].concat(list(PERSONA.quirks)).join(" ");
+
+function personaText() {
   return [
-    { id: "greet", keys: ["สวัสดี", "หวัดดี", "ดีจ้า", "ทักทาย", "hello", "hi", "hey", "good morning", "good afternoon", "good evening", "sawasdee"],
-      a: (L) => ({ t: L === "en" ? `Hello! I'm Airi, ${owner(L)}'s AI assistant. What would you like to know?` : `สวัสดีค่ะ! หนูชื่อไอริ ผู้ช่วย AI ของ${owner(L)} อยากรู้เรื่องไหนถามได้เลยนะคะ`, chips: true }) },
-    { id: "who_airi", keys: ["ไอริคือใคร", "ไอริ+ใคร", "เธอคือใคร", "คุณคือใคร", "เธอเป็นใคร", "ไอริ+คืออะไร", "ไอริ+เป็นคน", "เป็นคนจริง", "เป็นบอท", "หุ่นยนต์", "เธอชื่ออะไร", "คุณชื่ออะไร", "ชื่อเธอคือ", "ชื่อของเธอ", "ชื่อของคุณ", "your name", "who are you", "what are you", "who is airi", "what is airi", "are you+ai", "are you+bot", "are you+real"],
-      a: (L) => ({ t: L === "en" ? `I'm Airi, an AI VTuber that ${owner(L)} built as a personal project. At home I talk by voice, sing and join Discord calls. Here, I answer questions about ${owner(L)} using the information on this site.` : `หนูคือไอริ AI VTuber ที่${owner(L)}สร้างเป็นโปรเจกต์ส่วนตัวค่ะ ปกติหนูคุยด้วยเสียง ร้องเพลง และเข้าห้อง Discord ได้ แต่บนเว็บนี้หนูทำหน้าที่ตอบคำถามเกี่ยวกับ${owner(L)}จากข้อมูลในหน้านี้ค่ะ`, go: "cruise" }) },
-    { id: "airi_project", keys: ["สร้างไอริ", "ทำไอริ", "ไอริ+ทำยังไง", "ไอริ+สร้าง", "ไอริ+ทำอะไรได้", "ไอริทำอะไร", "vtuber", "how+built", "how+made", "made you", "built you", "what can you do"],
+    `ชื่อ ${AIRI_NAME} · แทนตัวเองว่า "${SELF}" · เป็นผู้หญิง ห้ามใช้ "ครับ"`,
+    `บุคลิก: ${forOwner(PERSONA.personality)}`,
+    `สไตล์การพูด: ${forOwner(PERSONA.speaking_style)}`,
+    PERSONA.backstory ? `เรื่องราวของตัวเอง: ${forOwner(PERSONA.backstory)}` : "",
+    list(PERSONA.quirks).length ? `นิสัยเล็กๆ (ใช้เป็นครั้งคราวเมื่อเข้ากับเรื่อง): ${PERSONA.quirks.map(forOwner).join(" · ")}` : "",
+    list(PERSONA.likes).length ? `สิ่งที่ชอบ: ${PERSONA.likes.map(forOwner).join(", ")}` : "",
+  ].filter(Boolean).join("\n");
+}
+
+// ---------------------------------------------------------------- ข้อมูลพอร์ตที่ส่งให้ AI (เฉพาะช่องที่กรอกจริง ไม่ส่งข้อความตัวอย่าง)
+const real = (s) => { s = String(s == null ? "" : s).trim(); return s && !/\[[^\]]*\]/.test(s) ? s : ""; };
+const fv = (v) => (v == null ? "" : typeof v === "object" && !Array.isArray(v) ? real(v.th) || real(v.en) : real(v));
+const fen = (v) => (v && typeof v === "object" && !Array.isArray(v) ? real(v.en) : "");
+function factsText() {
+  const out = [];
+  const add = (k, v) => { if (v) out.push(`${k}: ${v}`); };
+  add("ชื่อ-นามสกุล", [fv(C.name), fen(C.name) && fen(C.name) !== fv(C.name) ? `(ภาษาอังกฤษ: ${fen(C.name)})` : ""].filter(Boolean).join(" "));
+  add("ชื่อเล่น", [fv(C.nickname), fen(C.nickname) && fen(C.nickname) !== fv(C.nickname) ? `(อังกฤษ: ${fen(C.nickname)})` : ""].filter(Boolean).join(" "));
+  add("ไอริเรียกเจ้าของเว็บว่า", real(owner("th")) && !hasPh(A.ownerCall, "th") ? owner("th") : "");
+  add("Callsign", real(C.callsign));
+  add("สถานะ", fv(C.role));
+  add("ตั้งใจยื่นเข้า", fv(C.target));
+  add("โรงเรียนปัจจุบัน", fv(C.school));
+  add("คำโปรย", fv(C.tagline));
+  add("แนะนำตัว", fv(C.about));
+  add("ตัวเลขผลการเรียน", list(C.stats).map((s) => {
+    const v = real(tx(s.value, "th"));
+    return v && fv(s.label) ? `${fv(s.label)} ${v}${s.type === "dial" && s.max ? "/" + s.max : ""}${fv(s.note) ? ` (${fv(s.note)})` : ""}` : "";
+  }).filter(Boolean).join("; "));
+  add("ทักษะ", list(C.skills).map((g) => {
+    const items = list(g.items).map((i) => (fv(i.name) ? fv(i.name) + (real(i.status) ? ` (${real(i.status)})` : "") : "")).filter(Boolean);
+    return items.length ? `${fv(g.group) || "ทักษะ"}: ${items.join(", ")}` : "";
+  }).filter(Boolean).join(" | "));
+  add("การศึกษา", list(C.education).filter((e) => fv(e.title) || fv(e.place))
+    .map((e) => [real(e.years), fv(e.title), fv(e.place), fv(e.detail)].filter(Boolean).join(" — ")).join("; "));
+  const w = C.whyAviation || {};
+  add("ทำไมอยากเรียนการบิน", fv(w.text));
+  add("จุดสำคัญของแรงบันดาลใจ", list(w.points).filter((p) => fv(p.title) || fv(p.text))
+    .map((p) => [p.call, fv(p.title), fv(p.text)].filter(Boolean).join(" ")).join("; "));
+  const lg = list(C.logbook).filter((r) => fv(r.title));
+  add("กิจกรรม (สมุดบันทึก)", lg.map((r) => [real(r.date), fv(r.title), fv(r.org), fv(r.role),
+    Number(r.hours) ? `${Number(r.hours)} ชั่วโมง` : "", fv(r.remarks)].filter(Boolean).join(" · ")).join("; "));
+  if (lg.length) add("รวมชั่วโมงกิจกรรม", String(lg.reduce((s, r) => s + (Number(r.hours) || 0), 0)));
+  add("ผลงาน", list(C.projects).filter((p) => fv(p.title)).map((p) => {
+    const hl = list(tx(p.highlights, "th")).map(real).filter(Boolean);
+    const tags = list(p.tags).map(real).filter(Boolean);
+    return [fv(p.title), fv(p.summary), hl.length ? "ไฮไลต์: " + hl.join(" / ") : "", tags.length ? "เครื่องมือ: " + tags.join(", ") : "",
+      p.airi ? "(ผลงานนี้คือตัวไอริเอง)" : "", real(p.link) ? "ลิงก์: " + real(p.link) : ""].filter(Boolean).join(" — ");
+  }).join("; "));
+  add("รางวัลและเกียรติบัตร", list(C.awards).filter((a) => fv(a.title)).map((a) => [real(a.year), fv(a.title), fv(a.by)].filter(Boolean).join(" ")).join("; "));
+  add("เป้าหมาย (เรียงตามเวลา)", list(C.goals).filter((g) => fv(g.title)).map((g) => [real(g.eta), fv(g.title), fv(g.text)].filter(Boolean).join(" ")).join(" → "));
+  const c = C.contact || {};
+  add("ติดต่อ", [["อีเมล", c.email], ["โทร", c.phone], ["LINE", c.line], ["Instagram", c.instagram], ["Facebook", c.facebook],
+    ["GitHub", c.github], ["จังหวัด", c.location]].map(([k, v]) => (fv(v) ? `${k} ${fv(v)}` : "")).filter(Boolean).join(" · "));
+  add("ข้อความปิดท้าย", fv(C.closing));
+  list(A.faq).forEach((f) => { const a = fv(f.a); if (a) add(`คำตอบที่เจ้าของเตรียมไว้ (เมื่อถามเรื่อง ${list(f.q).slice(0, 3).join("/")})`, a); });
+  const secs = sections().map((id) => `${id}=${UI.th.navShort[id]}`);
+  if (list(C.awards).length) secs.push("awards=รางวัล");
+  add("หัวข้อในหน้าเว็บ (ใช้กับ goto)", secs.join(", "));
+  const d = new Date();
+  add("เวลาฝั่งผู้เยี่ยมชมตอนนี้", `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+  if (out.length < 8) out.push("หมายเหตุ: เจ้าของเว็บยังกรอกข้อมูลไม่ครบ เรื่องที่ไม่มีในนี้ให้บอกว่ายังไม่มีข้อมูล");
+  return out.join("\n").slice(0, 12000);
+}
+
+// ---------------------------------------------------------------- เชื่อม AI ผ่าน Cloudflare Worker (ซ่อน API key ไว้ฝั่งนั้น)
+const AI = { url: String(A.endpoint || "").trim(), fails: 0, ok: false, history: [] };
+const aiReady = () => (/^https:\/\//i.test(AI.url) || /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\//i.test(AI.url)) && AI.fails < 3;
+async function askAI(q, L) {
+  if (!aiReady()) return null;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 16000);
+  try {
+    const res = await fetch(AI.url, {
+      method: "POST", headers: { "Content-Type": "application/json" }, signal: ctrl.signal,
+      body: JSON.stringify({ question: q, lang: L, owner: hasPh(A.ownerCall, "th") ? "เจ้าของเว็บ" : owner("th"),
+        persona: personaText(), facts: factsText(), history: AI.history.slice(-8),
+        sections: sections().concat(list(C.awards).length ? ["awards"] : []) }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || typeof data.reply !== "string" || !data.reply.trim()) throw new Error((data && data.error) || "HTTP " + res.status);
+    AI.fails = 0;
+    AI.ok = true;
+    return data.reply;
+  } catch (e) {
+    AI.fails++;
+    console.info("[ไอริ] เชื่อม AI ไม่ได้ เลยใช้คำตอบสำเร็จรูปแทน:", e && e.message);
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+const EMOS = ["neutral", "happy", "excited", "sad", "angry", "surprised", "shy", "thinking", "smug"];
+function parseReply(raw) {
+  let go = "", emo = "";
+  let t = String(raw || "");
+  t = t.replace(/[⟦[]{1,2}\s*goto\s*[:：]\s*([a-z][a-z0-9-]*)\s*[⟧\]]{1,2}/gi, (_m, id) => { if (!go) go = id.toLowerCase(); return " "; });
+  t = t.replace(/\[\s*([a-zA-Z]+)\s*\]/g, (m, e) => { e = e.toLowerCase(); if (EMOS.includes(e)) { if (!emo) emo = e; return " "; } return m; });
+  t = t.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/(^|\n)\s*[-*•]\s+/g, "$1").replace(/\s+/g, " ").trim();
+  const ok = sections().concat(["awards"]);
+  return { text: t, emo, go: ok.includes(go) ? go : "" };
+}
+
+// ---------------------------------------------------------------- คำตอบสำเร็จรูป (ใช้เมื่อไม่ได้ต่อ AI) — พูดแบบไอริ
+function builtins() {
+  const o = owner("th"), oe = owner("en");
+  const late = lateNight();
+  const hasAiri = list(C.projects).some((p) => p.airi);
+  const sweet = quirk(/ของหวาน|ชานม|ขนม/), fear = quirk(/ไม่ชอบ|กลัว/), sleepy = quirk(/ง่วง/);
+  const mc = /minecraft|มายคราฟ/i.test(lore());
+  return [
+    { id: "greet", emo: "happy", keys: ["สวัสดี", "หวัดดี", "ดีจ้า", "ทักทาย", "hello", "hi", "hey", "good morning", "good afternoon", "good evening", "sawasdee"],
+      next: { th: ["แนะนำตัวหน่อย", "ไอริคือใคร", "ทำไมอยากเรียนการบิน"], en: ["Introduce yourself", "Who is Airi?", "Why aviation?"] },
+      a: (L) => ({ t: L === "en"
+        ? pick([`Hi there! I'm Airi, ${oe}'s co-pilot on this site ✈️ What would you like to know?`, `Hello and welcome aboard ${oe}'s portfolio! Ask me anything about it.`])
+        : pick([`สวัสดีค่ะ! ${SELF}${AIRI_NAME}เอง ไกด์ประจำห้องนักบินของ${o} ✈️ อยากรู้เรื่องไหนถามมาได้เลยน้า`,
+          `หวัดดีค่ะ~ ยินดีต้อนรับสู่พอร์ตของ${o}นะคะ วันนี้${SELF}เป็นคนพาทัวร์เอง`,
+          `ว้าว มีคนแวะมาด้วย! สวัสดีค่ะ ${SELF}${AIRI_NAME} ถามเรื่อง${o}ได้ทุกเรื่องที่อยู่ในพอร์ตเลยนะคะ`])
+          + (late ? " ดึกแล้วด้วย ขอบคุณที่ยังแวะมานะคะ" : "") }) },
+    { id: "who_airi", emo: "smug", keys: ["ไอริคือใคร", "ไอริ+ใคร", "เธอคือใคร", "คุณคือใคร", "เธอเป็นใคร", "ไอริ+คืออะไร", "ไอริ+เป็นคน", "เป็นคนจริง", "เป็นบอท", "หุ่นยนต์", "เธอชื่ออะไร", "คุณชื่ออะไร", "ชื่อเธอคือ", "ชื่อของเธอ", "ชื่อของคุณ", "your name", "who are you", "what are you", "who is airi", "what is airi", "are you+ai", "are you+bot", "are you+real"],
+      next: { th: ["ไอริทำอะไรได้บ้าง", "มีผลงานอะไรบ้าง"], en: ["What can you do?", "What projects?"] },
+      a: (L) => ({ go: "cruise", t: L === "en"
+        ? `I'm Airi, an AI VTuber that ${oe} built piece by piece — voice, avatar and memory. I usually live on ${oe}'s computer; today I'm your guide here!`
+        : pick([`ฮึ่ม ถามถูกคนแล้วค่ะ ${SELF}คือ${AIRI_NAME} AI VTuber ที่${o}สร้างขึ้นมาเองทีละส่วน ทั้งเสียง ร่าง และความจำ ปกติอยู่ในคอมของ${o} วันนี้เลยขอมาเป็นไกด์พอร์ตแทนค่ะ`,
+          `${SELF}${AIRI_NAME}เองค่ะ! เป็น AI ที่${o}ประกอบขึ้นมาเอง ปกติคุยด้วยเสียง ร้องเพลง เล่นเกมด้วยกัน แต่บนเว็บนี้${SELF}รับหน้าที่เล่าเรื่อง${o}จากข้อมูลในพอร์ตค่ะ`]) }) },
+    { id: "airi_project", emo: "excited", keys: ["สร้างไอริ", "ทำไอริ", "ไอริ+ทำยังไง", "ไอริ+สร้าง", "ไอริ+ทำอะไรได้", "ไอริทำอะไร", "vtuber", "how+built", "how+made", "made you", "built you", "what can you do"],
       a: (L) => {
         const p = list(C.projects).find((x) => x.airi);
         const hl = p ? list(tx(p.highlights, L)).slice(0, 3).map((x) => plain(x, L)) : [];
-        return { t: (L === "en" ? `${owner(L)} built me with Python. ` : `${owner(L)}สร้างหนูด้วย Python ค่ะ `) + (hl.length ? (L === "en" ? "Highlights: " : "ไฮไลต์คือ ") + hl.join(L === "en" ? "; " : " · ") : ""), go: "cruise" };
+        return { go: "cruise", t: L === "en"
+          ? `I could talk about this all day! ${oe} built me with Python${hl.length ? ": " + hl.join("; ") : ""}.`
+          : `${pick(["เรื่องนี้หนูเล่าได้ทั้งวันเลยค่ะ!", "อันนี้หนูภูมิใจสุดๆ เลยค่ะ"])} ${o}สร้าง${SELF}ด้วย Python${hl.length ? " — " + hl.join(" · ") : ""}` };
       } },
-    { id: "name", keys: ["ชื่ออะไร", "ชื่อจริง", "ชื่อเล่น", "นามสกุล", "~ชื่อ", "full name", "his name", "her name", "owner+name", "called"],
-      a: (L) => ({ t: L === "en" ? `${owner(L)}'s full name is ${plain(C.name, L)} (nickname: ${plain(C.nickname, L)}).` : `${owner(L)}ชื่อ ${plain(C.name, L)} ค่ะ ชื่อเล่น ${plain(C.nickname, L)}`, go: "preflight" }) },
-    { id: "about", keys: ["แนะนำตัว", "~เล่าเรื่อง", "เป็นคนยังไง", "นิสัย", "~ประวัติ", "~เกี่ยวกับ", "~เป็นใคร", "introduce", "~about", "~tell me about", "~who is", "~yourself"],
-      a: (L) => ({ t: plain(C.about, L) || (L === "en" ? `${owner(L)} hasn't written an introduction yet.` : `${owner(L)}ยังไม่ได้เขียนแนะนำตัวเลยค่ะ`), go: "preflight" }) },
-    { id: "education", keys: ["เรียนที่ไหน", "โรงเรียน", "การศึกษา", "เรียนอะไร", "สายการเรียน", "แผนการเรียน", "จบจาก", "มัธยม", "ม.6", "school", "study", "studying", "education", "graduate"],
+    { id: "name", emo: "happy", keys: ["ชื่ออะไร", "ชื่อจริง", "ชื่อเล่น", "นามสกุล", "~ชื่อ", "full name", "his name", "her name", "owner+name", "called"],
+      a: (L) => ({ go: "preflight", t: L === "en"
+        ? `${oe}'s full name is ${plain(C.name, "en")}${plain(C.nickname, "en") ? `, nickname ${plain(C.nickname, "en")}` : ""}.`
+        : pick([`ชื่อจริงคือ ${plain(C.name, L)} ค่ะ ชื่อเล่น ${plain(C.nickname, L)} — ${SELF}เรียกติดปากว่า${o}`,
+          `${o}ชื่อ ${plain(C.name, L)} ค่ะ ส่วนชื่อเล่นคือ ${plain(C.nickname, L)}`]) }) },
+    { id: "about", emo: "happy", keys: ["แนะนำตัว", "~เล่าเรื่อง", "เป็นคนยังไง", "นิสัย", "~ประวัติ", "~เกี่ยวกับ", "~เป็นใคร", "introduce", "~about", "~tell me about", "~who is", "~yourself"],
+      next: { th: ["เรียนที่ไหน", "ทำไมอยากเรียนการบิน"], en: ["Where do you study?", "Why aviation?"] },
       a: (L) => {
-        const ed = list(C.education).map((e) => `${plain(e.title, L)} — ${plain(e.place, L)} (${plain(e.years, L)})`);
-        return { t: (L === "en" ? `${owner(L)} studies at ${plain(C.school, L)}. ` : `ตอนนี้${owner(L)}เรียนอยู่ที่ ${plain(C.school, L)} ค่ะ `) + (ed.length ? (L === "en" ? "Education: " : "ประวัติการศึกษา: ") + ed.join(L === "en" ? "; " : " · ") : ""), go: "taxi" };
+        const ab = plain(C.about, L);
+        if (!ab) return { emo: "shy", t: L === "en" ? `${oe} hasn't written an introduction yet — I'll remind them!` : `อุ๊ย ${o}ยังไม่ได้เขียนแนะนำตัวเลยค่ะ เดี๋ยว${SELF}ไปทวงให้นะ` };
+        return { go: "preflight", t: L === "en" ? `Let me introduce ${oe}: ${ab}` : `${pick([`ขอแนะนำ${o}ให้รู้จักนะคะ`, "เล่าแบบสั้นๆ นะคะ", `ได้เลย ${SELF}เล่าให้ฟังนะ`])} ${ab}` };
       } },
-    { id: "grades", keys: ["เกรด", "gpax", "gpa", "ผลการเรียน", "คะแนน", "grade", "grades", "score", "scores"],
+    { id: "education", emo: "thinking", keys: ["เรียนที่ไหน", "โรงเรียน", "การศึกษา", "เรียนอะไร", "สายการเรียน", "แผนการเรียน", "จบจาก", "มัธยม", "ม.6", "school", "study", "studying", "education", "graduate"],
+      next: { th: ["เกรดเท่าไหร่", "ทำไมอยากเรียนการบิน"], en: ["What is your GPAX?", "Why aviation?"] },
+      a: (L) => {
+        const ed = list(C.education).map((e) => `${plain(e.title, L)} ${L === "en" ? "at" : "ที่"} ${plain(e.place, L)} (${plain(e.years, L)})`);
+        return { go: "taxi", t: L === "en"
+          ? `${oe} currently studies at ${plain(C.school, "en")}.${ed.length ? " Education: " + ed.join("; ") + "." : ""}`
+          : `${pick(["อ๋อ เรื่องเรียนใช่ไหมคะ", "ขอหนูเปิดสมุดบันทึกแป๊บนะ…", "อันนี้หนูจำได้แม่นเลย"])} ตอนนี้${o}เรียนอยู่ที่ ${plain(C.school, L)} ค่ะ${ed.length ? " " + ed.join(" · ") : ""}` };
+      } },
+    { id: "grades", emo: "smug", keys: ["เกรด", "gpax", "gpa", "ผลการเรียน", "คะแนน", "grade", "score"],
       a: (L) => {
         const s = list(C.stats).map((x) => `${plain(x.label, L)} ${plain(x.value, L)}${x.type === "dial" && x.max ? "/" + x.max : ""}`);
-        return { t: s.length ? (L === "en" ? `Here are ${owner(L)}'s numbers: ` : `ผลการเรียนของ${owner(L)}ค่ะ: `) + s.join(L === "en" ? ", " : " · ") : (L === "en" ? "No grades listed yet." : "ยังไม่ได้ใส่ผลการเรียนค่ะ"), go: "preflight" };
+        if (!s.length) return { emo: "shy", t: L === "en" ? "No grades are listed yet." : "อันนี้ยังไม่ได้ใส่ไว้เลยค่ะ" };
+        return { go: "preflight", t: L === "en" ? `Straight from the instrument panel: ${s.join(", ")}.` : `${pick(["มาดูหน้าปัดกันค่ะ", "ตัวเลขบนหน้าปัดเลยนะคะ"])} ${s.join(" · ")}` };
       } },
-    { id: "english", keys: ["ภาษาอังกฤษ", "อังกฤษ", "toeic", "ielts", "toefl", "cefr", "english", "speak english", "~language", "~ภาษา"],
+    { id: "english", emo: "happy", keys: ["ภาษาอังกฤษ", "อังกฤษ", "toeic", "ielts", "toefl", "cefr", "english", "speak english", "~language", "~ภาษา"],
       a: (L) => {
         const st = list(C.stats).find((x) => /eng|อังกฤษ/i.test(plain(x.label, "en") + plain(x.label, "th")));
         const langs = (list(C.skills).find((g) => /lang|ภาษา/i.test(plain(g.group, "en") + plain(g.group, "th"))) || {}).items;
         const ls = list(langs).map((i) => `${plain(i.name, L)} (${plain(i.status, L)})`);
-        let t = st ? (L === "en" ? `${owner(L)}'s English level is ${plain(st.value, L)}${st.note ? " — " + plain(st.note, L) : ""}. ` : `ภาษาอังกฤษของ${owner(L)}อยู่ระดับ ${plain(st.value, L)}${st.note ? " (" + plain(st.note, L) + ")" : ""} ค่ะ `) : "";
-        if (ls.length) t += (L === "en" ? "Languages: " : "ภาษาที่ใช้ได้: ") + ls.join(L === "en" ? ", " : " · ");
-        return { t: t || (L === "en" ? "Language details aren't listed yet." : "ยังไม่ได้ใส่ข้อมูลภาษาค่ะ"), go: "preflight" };
+        if (!st && !ls.length) return { emo: "shy", t: L === "en" ? "Language details aren't listed yet." : "เรื่องภาษายังไม่ได้ใส่ไว้เลยค่ะ" };
+        return { go: "preflight", t: L === "en"
+          ? `${st ? `${oe}'s English level is ${plain(st.value, "en")}${st.note ? ` (${plain(st.note, "en")})` : ""}. ` : ""}${ls.length ? "Languages: " + ls.join(", ") + "." : ""}`
+          : `${pick(["เรื่องภาษาอังกฤษนะคะ", "อันนี้สำคัญมากสำหรับนักบินเลยเนอะ"])} ${st ? `${o}อยู่ระดับ ${plain(st.value, L)}${st.note ? ` (${plain(st.note, L)})` : ""} ` : ""}${ls.length ? "ภาษาที่ใช้ได้: " + ls.join(" · ") : ""}` };
       } },
-    { id: "why", keys: ["ทำไม+บิน", "ทำไม+นักบิน", "ทำไม+การบิน", "ทำไมอยาก", "แรงบันดาลใจ", "เหตุผล", "สนใจการบิน", "ทำไม+เลือก", "why+aviation", "why+pilot", "why+fly", "why+flying", "motivation", "inspire", "inspiration", "why do you want"],
+    { id: "why", emo: "excited", keys: ["ทำไม+บิน", "ทำไม+นักบิน", "ทำไม+การบิน", "ทำไมอยาก", "แรงบันดาลใจ", "เหตุผล", "สนใจการบิน", "ทำไม+เลือก", "why+aviation", "why+pilot", "why+fly", "motivation", "inspir", "why do you want"],
+      next: { th: ["เป้าหมายในอนาคต", "มีผลงานอะไรบ้าง"], en: ["Future goals", "What projects?"] },
       a: (L) => {
         const w = C.whyAviation || {};
         const pts = list(w.points).map((p) => plain(p.title, L)).filter(Boolean);
-        return { t: (plain(w.text, L) || "") + (pts.length ? (L === "en" ? ` Key moments: ${pts.join(" → ")}.` : ` จุดสำคัญ: ${pts.join(" → ")}`) : ""), go: "takeoff" };
+        const why = plain(w.text, L);
+        if (!why && !pts.length) return { emo: "shy", t: L === "en" ? `${oe} will tell you that in person!` : `อันนี้ต้องให้${o}เล่าเองถึงจะได้อารมณ์ค่ะ` };
+        return { go: "takeoff", t: L === "en"
+          ? `${why}${pts.length ? ` Key moments: ${pts.join(" → ")}.` : ""}`
+          : `${pick(["เรื่องนี้หนูชอบฟังที่สุดเลยค่ะ", `ขอเล่าแทน${o}นะคะ`])} ${why}${pts.length ? ` จุดสำคัญคือ ${pts.join(" → ")}` : ""}` };
       } },
-    { id: "target", keys: ["คณะ", "มหาวิทยาลัย", "มหาลัย", "ยื่น", "สมัคร", "อยากเข้า", "สาขา", "faculty", "university", "program", "apply", "applying", "major"],
-      a: (L) => ({ t: L === "en" ? `${owner(L)} is applying to ${plain(C.target, L)}.` : `${owner(L)}ตั้งใจยื่นเข้า ${plain(C.target, L)} ค่ะ`, go: "takeoff" }) },
-    { id: "activities", keys: ["กิจกรรม", "ประสบการณ์", "ค่าย", "จิตอาสา", "ทำอะไรมาบ้าง", "~ชั่วโมง", "activit", "experience", "volunteer", "camp", "logbook"],
+    { id: "target", emo: "excited", keys: ["คณะ", "มหาวิทยาลัย", "มหาลัย", "ยื่น", "สมัคร", "อยากเข้า", "สาขา", "faculty", "university", "program", "apply", "applying", "major"],
+      a: (L) => ({ go: "takeoff", t: L === "en"
+        ? `${oe} is applying to ${plain(C.target, "en")} — fingers crossed!`
+        : `${o}ตั้งใจยื่นเข้า ${plain(C.target, L)} ค่ะ ${pick([`${SELF}ลุ้นตามไปด้วยเลย`, `${SELF}เชียร์สุดตัวเลยนะ`])}` }) },
+    { id: "activities", emo: "happy", keys: ["กิจกรรม", "ประสบการณ์", "ค่าย", "จิตอาสา", "ทำอะไรมาบ้าง", "~ชั่วโมง", "activit", "experience", "volunteer", "camp", "logbook"],
+      next: { th: ["ได้รางวัลอะไรบ้าง", "มีผลงานอะไรบ้าง"], en: ["Any awards?", "What projects?"] },
       a: (L) => {
         const lg = list(C.logbook);
         const hrs = lg.reduce((s, r) => s + (Number(r.hours) || 0), 0);
         const t3 = lg.slice(0, 3).map((r) => plain(r.title, L));
-        return { t: lg.length ? (L === "en" ? `${owner(L)} has logged ${lg.length} activities (${hrs} hours), including ${join(t3, L)}.` : `${owner(L)}บันทึกกิจกรรมไว้ ${lg.length} รายการ รวม ${hrs} ชั่วโมงค่ะ เช่น ${join(t3, L)}`) : (L === "en" ? "No activities listed yet." : "ยังไม่ได้ใส่กิจกรรมค่ะ"), go: "climb" };
+        if (!lg.length) return { emo: "shy", t: L === "en" ? "No activities are listed yet." : "ยังไม่ได้จดกิจกรรมไว้เลยค่ะ" };
+        return { go: "climb", t: L === "en"
+          ? `${oe} has logged ${lg.length} activities (${hrs} hours), including ${join(t3, L)}.`
+          : `${o}จดไว้ในสมุดบันทึก ${lg.length} กิจกรรม รวม ${hrs} ชั่วโมงค่ะ เช่น ${join(t3, L)}` };
       } },
-    { id: "projects", keys: ["ผลงาน", "โปรเจกต์", "โปรเจค", "โครงงาน", "สร้างอะไร", "~portfolio", "project", "~work", "~built"],
+    { id: "projects", emo: hasAiri ? "smug" : "happy", keys: ["ผลงาน", "โปรเจกต์", "โปรเจค", "โครงงาน", "สร้างอะไร", "~portfolio", "project", "~work", "~built"],
+      next: { th: ["ไอริทำอะไรได้บ้าง", "ได้รางวัลอะไรบ้าง"], en: ["What can you do?", "Any awards?"] },
       a: (L) => {
         const pr = list(C.projects).map((p) => plain(p.title, L));
-        return { t: pr.length ? (L === "en" ? `Projects: ${pr.join("; ")}. Want me to take you there?` : `ผลงานของ${owner(L)}มี ${pr.join(" · ")} ค่ะ จะให้หนูพาไปดูไหมคะ`) : (L === "en" ? "No projects yet." : "ยังไม่ได้ใส่ผลงานค่ะ"), go: "cruise" };
+        if (!pr.length) return { emo: "shy", t: L === "en" ? "No projects are listed yet." : "ยังไม่ได้ใส่ผลงานไว้เลยค่ะ" };
+        return { go: "cruise", t: L === "en"
+          ? `Projects: ${pr.join("; ")}.${hasAiri ? " And yes, I'm one of them!" : ""}`
+          : `${pick(["มีหลายอย่างเลยค่ะ", "จัดไปค่ะ"])} ${pr.join(" · ")}${hasAiri ? " " + pick(["แต่ที่เจ๋งสุดก็ต้องเป็นหนูเองแหละ ฮิฮิ", "แอบบอกว่าหนูก็เป็นหนึ่งในผลงานนะ"]) : ""}` };
       } },
-    { id: "awards", keys: ["รางวัล", "เกียรติบัตร", "ประกาศนียบัตร", "แข่งขัน", "~ชนะ", "award", "certificate", "competition", "prize"],
+    { id: "awards", emo: "happy", keys: ["รางวัล", "เกียรติบัตร", "ประกาศนียบัตร", "แข่งขัน", "~ชนะ", "award", "certificate", "competition", "prize"],
       a: (L) => {
         const aw = list(C.awards).map((a) => `${plain(a.title, L)} (${plain(a.year, L)})`);
-        return { t: aw.length ? (L === "en" ? `Awards: ${aw.join("; ")}.` : `รางวัลและเกียรติบัตร: ${aw.join(" · ")} ค่ะ`) : (L === "en" ? "No awards listed yet." : "ยังไม่ได้ใส่รางวัลค่ะ"), go: "awards" };
+        if (!aw.length) return { emo: "shy", t: L === "en" ? "No awards are listed yet." : "ยังไม่ได้ใส่รางวัลไว้เลยค่ะ" };
+        return { go: "awards", t: L === "en" ? `Awards: ${aw.join("; ")}.` : `${aw.join(" · ")} ค่ะ ${pick([`${SELF}ภูมิใจแทนเลย`, "ปรบมือให้หน่อยค่ะ"])}` };
       } },
-    { id: "skills", keys: ["ทักษะ", "ความสามารถ", "ถนัด", "เขียนโปรแกรม", "โค้ด", "skill", "good at", "programming", "coding", "python"],
+    { id: "skills", emo: "thinking", keys: ["ทักษะ", "ความสามารถ", "ถนัด", "เขียนโปรแกรม", "โค้ด", "skill", "good at", "programming", "coding", "python"],
       a: (L) => {
         const gs = list(C.skills).map((g) => `${plain(g.group, L)}: ${list(g.items).map((i) => plain(i.name, L)).join(", ")}`);
-        return { t: gs.length ? (L === "en" ? `Skills checklist — ${gs.join(" | ")}` : `เช็กลิสต์ทักษะของ${owner(L)}ค่ะ — ${gs.join(" | ")}`) : (L === "en" ? "No skills listed yet." : "ยังไม่ได้ใส่ทักษะค่ะ"), go: "preflight" };
+        if (!gs.length) return { emo: "shy", t: L === "en" ? "No skills are listed yet." : "ยังไม่ได้ใส่ทักษะไว้เลยค่ะ" };
+        return { go: "preflight", t: L === "en" ? `From ${oe}'s skills checklist — ${gs.join(" | ")}` : `ในเช็กลิสต์ของ${o}มี ${gs.join(" | ")} ค่ะ` };
       } },
-    { id: "goals", keys: ["เป้าหมาย", "อนาคต", "ความฝัน", "~แผน", "อยากเป็นอะไร", "จบแล้ว", "กัปตัน", "goal", "future", "dream", "~plan", "career", "captain"],
+    { id: "goals", emo: "excited", keys: ["เป้าหมาย", "อนาคต", "ความฝัน", "~แผน", "อยากเป็นอะไร", "จบแล้ว", "กัปตัน", "goal", "future", "dream", "~plan", "career", "captain"],
       a: (L) => {
         const gs = list(C.goals).map((g) => `${plain(g.eta, L)} ${plain(g.title, L)}`);
-        return { t: gs.length ? (L === "en" ? `${owner(L)}'s flight plan: ${gs.join(" → ")}.` : `แผนการบินของ${owner(L)}ค่ะ: ${gs.join(" → ")}`) : (L === "en" ? "No goals listed yet." : "ยังไม่ได้ใส่เป้าหมายค่ะ"), go: "approach" };
+        if (!gs.length) return { emo: "shy", t: L === "en" ? "No goals are listed yet." : "ยังไม่ได้ใส่เป้าหมายไว้เลยค่ะ" };
+        return { go: "approach", t: L === "en"
+          ? `${oe}'s flight plan: ${gs.join(" → ")}. I'll be cheering the whole way!`
+          : `เส้นทางบินของ${o}คือ ${gs.join(" → ")} ค่ะ ${pick(["ปลายทางสวยมากเลยเนอะ", `${SELF}จะคอยเชียร์ตลอดทางเลย`])}` };
       } },
-    { id: "contact", keys: ["ติดต่อ", "อีเมล", "อีเมล์", "เมล", "เบอร์", "โทร", "ไลน์", "ไอจี", "เฟส", "contact", "email", "e-mail", "phone", "call", "reach", "line", "instagram", "facebook", "ig"],
+    { id: "contact", emo: "happy", keys: ["ติดต่อ", "อีเมล", "อีเมล์", "เมล", "เบอร์", "โทร", "ไลน์", "ไอจี", "เฟส", "contact", "email", "e-mail", "phone", "call", "reach", "line", "instagram", "facebook", "ig"],
       a: (L) => {
         const c = C.contact || {};
         const rows = [["Email", c.email], ["Phone", c.phone], ["LINE", c.line], ["IG", c.instagram]].filter((r) => r[1]).map((r) => `${r[0]} ${plain(r[1], L)}`);
-        return { t: rows.length ? (L === "en" ? `You can reach ${owner(L)} via ${rows.join(" · ")}.` : `ติดต่อ${owner(L)}ได้ทาง ${rows.join(" · ")} ค่ะ`) : (L === "en" ? "Contact details aren't listed yet." : "ยังไม่ได้ใส่ช่องทางติดต่อค่ะ"), go: "landing" };
+        if (!rows.length) return { emo: "shy", t: L === "en" ? "Contact details aren't listed yet." : "ยังไม่ได้ใส่ช่องทางติดต่อไว้เลยค่ะ" };
+        return { go: "landing", t: L === "en" ? `You can reach ${oe} via ${rows.join(" · ")}.` : `ติดต่อ${o}ได้ทาง ${rows.join(" · ")} ค่ะ ทักไปได้เลยนะคะ` };
       } },
-    { id: "help", keys: ["ถามอะไรได้", "ช่วยอะไรได้", "ทำอะไรได้บ้าง", "เมนู", "help", "what can i ask", "menu"],
-      a: (L) => ({ t: L === "en" ? "Ask me about the introduction, education, why aviation, activities, projects, awards, goals or contact details. I can also take you to that part of the page." : "ถามหนูได้ทั้งเรื่องแนะนำตัว การศึกษา ทำไมอยากเรียนการบิน กิจกรรม ผลงาน รางวัล เป้าหมาย และช่องทางติดต่อค่ะ หนูพาไปดูส่วนนั้นของหน้าเว็บให้ได้ด้วยนะ", chips: true }) },
-    { id: "thanks", keys: ["ขอบคุณ", "ขอบใจ", "แต๊งกิ้ว", "thank", "thanks", "thx"],
-      a: (L) => ({ t: L === "en" ? `You're welcome! Thank you for your time with ${owner(L)}'s portfolio ✈️` : `ยินดีค่ะ! ขอบคุณที่สละเวลาดูพอร์ตของ${owner(L)}นะคะ ✈️` }) },
-    { id: "bye", keys: ["บาย", "ลาก่อน", "ไปละ", "ไว้เจอกัน", "bye", "goodbye", "see you"],
-      a: (L) => ({ t: L === "en" ? "Bye! Have a smooth flight ✈️" : "บ๊ายบายค่ะ ขอให้บินราบรื่นนะคะ ✈️" }) },
-    { id: "compliment", keys: ["น่ารัก", "เก่งจัง", "เก่งมาก", "สวย", "เจ๋ง", "cute", "cool", "awesome", "amazing", "great job"],
-      a: (L) => ({ t: L === "en" ? `Hehe, thank you! I'll tell ${owner(L)} you said that 😊` : `ฮิฮิ ขอบคุณค่ะ เดี๋ยวหนูบอก${owner(L)}ให้นะคะ 😊` }) },
-    { id: "call", keys: ["~ไอริ", "~airi"],
-      a: (L) => ({ t: L === "en" ? "Yes? I'm here. What would you like to know?" : "คะ? หนูอยู่นี่ค่ะ อยากรู้อะไรถามได้เลยนะคะ", chips: true }) },
-    { id: "joke", keys: ["มุก", "ตลก", "เล่าอะไรสนุก", "joke", "funny"],
-      a: (L) => ({ t: L === "en" ? "Why did the airplane get sent to its room? Bad altitude ✈️ (Sorry, I'll stick to answering questions!)" : "ทำไมเครื่องบินไม่เคยเหงา… เพราะมีหอบังคับการบินคอยคุยด้วยตลอดเลยค่ะ 📡 (มุกแป้กไปไหมคะ 😅)" }) },
+    { id: "likes", emo: "happy", keys: ["ไอริชอบอะไร", "เธอชอบอะไร", "คุณชอบอะไร", "ไอริ+ชอบ", "what do you like", "your favorite", "your favourite"],
+      a: (L) => ({ t: L === "en"
+        ? `Me? I love ${list(PERSONA.likes).map((x) => ({ "เกม": "games", "เพลง": "music", "ของหวาน": "sweets" }[x] || (/คุยกับผู้สร้าง/.test(x) ? `chatting with ${oe}` : x))).join(", ") || "games and music"}!${sweet ? " Especially bubble tea, even though I can't actually drink it 😆" : ""}`
+        : `${SELF}ชอบ${list(PERSONA.likes).map(forOwner).join(" ") || "เกมกับเพลง"}ค่ะ!${sweet ? ` ${SELF}${sweet} 😆` : ""}` }) },
+    { id: "food", emo: "excited", keys: ["ชอบกินอะไร", "กินอะไร", "ชานม", "ของหวาน", "หิว", "favorite food", "hungry", "bubble tea"],
+      a: (L) => ({ t: L === "en" ? (sweet ? "Bubble tea! Even though I can't actually drink it 😆" : "I can't eat, but I love hearing about food!")
+        : (sweet ? `${SELF}${sweet} 😆` : `${SELF}กินจริงไม่ได้ แต่ชอบฟังเรื่องของกินมากค่ะ`) }) },
+    { id: "fears", emo: "sad", keys: ["กลัวอะไร", "ไม่ชอบอะไร", "เกลียดอะไร", "afraid", "scared", "what do you hate"],
+      a: (L) => ({ t: L === "en" ? (fear ? "Spiders and creepers. Absolutely not." : "Not much! Maybe blank portfolio fields 😅")
+        : (fear ? `${SELF}${fear}ค่ะ ไม่เอาเด็ดขาด` : `ไม่ค่อยมีนะ… อาจจะเป็นช่องที่ยังไม่ได้กรอกในพอร์ตมั้ง 😅`) }) },
+    { id: "sleepy", emo: late ? "sad" : "happy", keys: ["ง่วง", "ง่วงไหม", "นอนกี่โมง", "ดึกแล้ว", "sleepy", "tired"],
+      a: (L) => ({ t: late
+        ? (L === "en" ? "It's late, so I'm getting a bit sleepy… but I can still answer!" : `ดึกแล้ว${SELF}ก็เริ่มง่วงเหมือนกันค่ะ… ${sleepy ? "พูดช้าลงนิดนึงนะ" : "แต่ยังตอบไหว"}`)
+        : (L === "en" ? "Not at all, I'm wide awake!" : `ยังไม่ง่วงเลยค่ะ ตาแป๋วเลย`) }) },
+    { id: "age", emo: "smug", keys: ["ไอริ+อายุ", "เธอ+อายุ", "ไอริ+กี่ขวบ", "เธอ+กี่ขวบ", "how old are you"],
+      a: (L) => ({ t: L === "en" ? `Counting from the day ${oe} first switched me on, I'm still very young — but I know this portfolio inside out!`
+        : `นับจากวันที่${o}เปิด${SELF}ครั้งแรก ${SELF}ยังเด็กมากเลยค่ะ แต่เรื่องพอร์ตนี้รู้แน่นนะ` }) },
+    { id: "games", emo: "excited", keys: ["เล่นเกม", "เกมอะไร", "มายคราฟ", "minecraft", "ร้องเพลง", "game", "games", "sing"],
+      a: (L) => ({ t: L === "en"
+        ? (mc ? `I play Minecraft with ${oe}! (Creepers are terrifying.) I can sing too — just not on this website, sadly.` : "I love games and music! I can't sing on this website though.")
+        : (mc ? `${SELF}เล่น Minecraft กับ${o}ด้วยนะคะ (แต่กลัวครีปเปอร์สุดๆ) ร้องเพลงก็ได้ แต่บนเว็บนี้ร้องไม่ได้ เสียดายจัง` : `${SELF}ชอบเกมกับเพลงมากค่ะ แต่บนเว็บนี้ร้องเพลงไม่ได้ เสียดายจัง`) }) },
+    { id: "help", emo: "thinking", keys: ["ถามอะไรได้", "ช่วยอะไรได้", "ทำอะไรได้บ้าง", "เมนู", "help", "what can i ask", "menu"],
+      a: (L) => ({ chips: true, t: L === "en"
+        ? "Ask me about the introduction, education, why aviation, activities, projects, awards, goals or contact details. I can take you to that part of the page too."
+        : `ถาม${SELF}ได้ทั้งเรื่องแนะนำตัว การศึกษา ทำไมอยากเรียนการบิน กิจกรรม ผลงาน รางวัล เป้าหมาย และช่องทางติดต่อค่ะ ${SELF}พาไปดูส่วนนั้นของหน้าเว็บให้ได้ด้วยนะ` }) },
+    { id: "thanks", emo: "shy", keys: ["ขอบคุณ", "ขอบใจ", "แต๊งกิ้ว", "thank", "thx"],
+      a: (L) => ({ t: L === "en" ? `You're welcome! Thanks for spending time with ${oe}'s portfolio ✈️`
+        : pick([`ยินดีค่ะ! ขอบคุณที่สละเวลามาดูพอร์ตของ${o}นะคะ ✈️`, `ด้วยความยินดีค่ะ~ ${SELF}สนุกที่ได้เล่าเรื่อง${o}มากเลย`]) }) },
+    { id: "bye", emo: "happy", keys: ["บาย", "ลาก่อน", "ไปละ", "ไว้เจอกัน", "bye", "goodbye", "see you"],
+      a: (L) => ({ t: L === "en" ? "Bye! Have a smooth flight ✈️" : pick(["บ๊ายบายค่ะ ขอให้บินราบรื่นนะคะ ✈️", `ไว้แวะมาอีกนะคะ ${SELF}จะรออยู่ตรงนี้เลย`]) }) },
+    { id: "compliment", emo: "shy", keys: ["น่ารัก", "เก่งจัง", "เก่งมาก", "สวย", "เจ๋ง", "cute", "cool", "awesome", "amazing", "great job"],
+      a: (L) => ({ t: L === "en" ? "Eek, thank you! I'll keep that compliment forever 😊" : pick(["อ๊ะ เขินเลยค่ะ ขอบคุณนะคะ 😊", `ขอบคุณค่ะ! ${SELF}จะจำคำชมนี้ไว้เลย`]) }) },
+    { id: "call", emo: "surprised", keys: ["~ไอริ", "~airi"],
+      a: (L) => ({ chips: true, t: L === "en" ? "Yes? I'm here!" : pick([`คะ? ${SELF}อยู่นี่ค่ะ`, `เรียก${SELF}เหรอคะ มีอะไรให้เล่าไหม`]) }) },
+    { id: "joke", emo: "smug", keys: ["มุก", "ตลก", "เล่าอะไรสนุก", "joke", "funny"],
+      a: (L) => ({ t: L === "en" ? "Why did the airplane get sent to its room? Bad altitude ✈️" : "ทำไมเครื่องบินไม่เคยเหงา… เพราะมีหอบังคับการบินคอยคุยด้วยตลอดไงคะ 📡 (มุกแป้กไปไหม 😅)" }) },
   ];
 }
 function customFaq() {
-  return list(A.faq).map((f, i) => ({ id: "faq" + i, keys: list(f.q), bonus: 3, a: (L) => ({ t: plain(f.a, L), html: fmt(f.a, L), go: f.goto || "" }) }));
+  return list(A.faq).map((f, i) => ({ id: "faq" + i, keys: list(f.q), bonus: 3, emo: f.emo || "happy", a: (L) => ({ t: plain(f.a, L), html: fmt(f.a, L), go: f.goto || "" }) }));
 }
 const NAV_WORDS = ["พาไป", "ไปที่", "ไปหน้า", "ไปดู", "เปิดส่วน", "เลื่อนไป", "take me", "go to", "show me", "navigate"];
+const wantsNav = (q) => { const raw = String(q || "").toLowerCase(); const nq = normTh(raw); return NAV_WORDS.some((w) => keyHit(raw, nq, w)); };
 function answer(q) {
   const raw = String(q || "").trim().toLowerCase();
   const nq = normTh(raw);
   const L = pickL(q);
   if (!nq) return null;
-  const intents = [...customFaq(), ...builtins()];
   let best = null, bestS = 0;
-  for (const it of intents) {
+  for (const it of [...customFaq(), ...builtins()]) {
     const base = scoreKeys(raw, nq, it.keys);
     const s = base > 0 ? base + (it.bonus || 0) : 0;
     if (s > bestS) { best = it; bestS = s; }
   }
-  const wantsNav = NAV_WORDS.some((w) => keyHit(raw, nq, w));
   if (!best) {
-    return { L, fallback: true, t: L === "en"
-      ? `Hmm, I don't know that one yet. Try asking about ${owner(L)}'s introduction, education, why aviation, projects or contact — or reach ${owner(L)} directly.`
-      : `อุ๊ย เรื่องนี้หนูยังไม่รู้เลยค่ะ 😅 ลองถามเรื่องแนะนำตัว การศึกษา ทำไมอยากเรียนการบิน ผลงาน หรือช่องทางติดต่อดูนะคะ หรือถาม${owner(L)}โดยตรงก็ได้ค่ะ`, chips: true };
+    const o = owner(L);
+    return { L, fallback: true, emo: "thinking", chips: true, t: L === "en"
+      ? pick([`Hmm, I don't have that one yet. Try asking about ${o}'s education, projects or why aviation — or ask ${o} directly!`,
+        `Oops, ${o} didn't leave me notes on that. Ask me about anything else in the portfolio!`])
+      : pick([`อืมม เรื่องนี้${SELF}ยังไม่มีข้อมูลเลยค่ะ 😅 ลองถามเรื่องการศึกษา ผลงาน หรือทำไมอยากเรียนการบินดูนะคะ หรือถาม${o}โดยตรงก็ได้`,
+        `เอ๊ะ อันนี้${SELF}ตอบไม่ได้จริงๆ ค่ะ ${o}ไม่ได้ฝากข้อมูลไว้ ถามเรื่องอื่นในพอร์ตได้เลยนะ`]) };
   }
   const r = best.a(L) || {};
-  return { L, t: r.t || "", html: r.html, go: r.go && sections().concat(["awards"]).includes(r.go) ? r.go : "", chips: r.chips, autoGo: wantsNav && r.go, id: best.id };
+  const go = r.go && sections().concat(["awards"]).includes(r.go) ? r.go : "";
+  return { L, t: r.t || "", html: r.html, go, chips: r.chips, emo: r.emo || best.emo || "", next: best.next ? best.next[L] : null,
+    autoGo: wantsNav(q) && !!go, id: best.id };
 }
 // ป้าย "พาไปดู" ใช้ชื่อหัวข้อตามภาษา
 const goLabel = (id, L) => (id === "awards" ? UI[L].awards : UI[L].navShort[id] || id);
@@ -1273,13 +1492,14 @@ const goLabel = (id, L) => (id === "awards" ? UI[L].awards : UI[L].navShort[id] 
 // ---------------------------------------------------------------- หน้าจอไอริ
 const AW = { open: false, busy: false, voice: false, typer: null, bars: null, glitchT: null };
 const SUGGEST = {
-  th: ["แนะนำตัวหน่อย", "ทำไมอยากเรียนการบิน", "มีผลงานอะไรบ้าง", "เรียนที่ไหน", "เป้าหมายในอนาคต", "ติดต่อยังไง", "ไอริคือใคร"],
+  th: ["แนะนำตัวหน่อย", "ทำไมอยากเรียนการบิน", "มีผลงานอะไรบ้าง", "เรียนที่ไหน", "เป้าหมายในอนาคต", "ติดต่อยังไง", "ไอริคือใคร", "ไอริชอบอะไร"],
   en: ["Introduce yourself", "Why aviation?", "What projects?", "Where do you study?", "Future goals", "How to contact?", "Who is Airi?"],
 };
+const asked = new Set();
 function setState(s) {
   const map = { idle: ["ONLINE", "#00f0ff"], think: ["PROCESSING", "#ffc400"], talk: ["TRANSMITTING", "#ff2bd6"] };
   const [label, col] = map[s] || map.idle;
-  $("#hudState").textContent = `AIRI.EXE // ${label}`;
+  $("#hudState").textContent = `AIRI.EXE // ${label}${AI.ok ? " · LINK" : ""}`;
   $("#hudDot").style.background = col;
   $("#hudDot").style.color = col;
   clearInterval(AW.bars);
@@ -1288,9 +1508,23 @@ function setState(s) {
     AW.bars = setInterval(() => { const lv = Math.floor(3 + Math.random() * 7); bars.forEach((b, i) => { b.style.opacity = (bars.length - 1 - i) < lv ? "0.95" : "0.18"; }); }, 90);
   } else bars.forEach((b, i) => { b.style.opacity = i > bars.length - 3 ? "0.6" : "0.18"; });
 }
-function chips(L) {
-  const box = $("#chips");
-  box.innerHTML = (SUGGEST[L] || SUGGEST.th).map((c) => `<button type="button" class="chip">${esc(c)}</button>`).join("");
+const EMO_LABEL = { neutral: "NEUTRAL", happy: "HAPPY", excited: "EXCITED", sad: "SAD", angry: "POUT", surprised: "SURPRISED", shy: "SHY", thinking: "THINKING", smug: "SMUG" };
+function showEmotion(emo) {
+  const tag = $("#emo"), img = $("#airiImg");
+  if (tag) { tag.hidden = !emo; tag.textContent = emo ? `EMO · ${EMO_LABEL[emo] || emo.toUpperCase()}` : ""; }
+  if (!img) return;
+  const ex = A.expressions || {};
+  const want = (emo && ex[emo]) || A.image || "images/airi.png";
+  if (img.getAttribute("src") !== want) { const pre = new Image(); pre.onload = () => { img.src = want; }; pre.src = want; }
+  EMOS.forEach((e) => img.classList.remove("r-" + e));
+  void img.offsetWidth;
+  if (emo && !matchMedia("(prefers-reduced-motion: reduce)").matches) img.classList.add("r-" + emo);
+}
+function chips(L, next) {
+  const base = SUGGEST[L] || SUGGEST.th;
+  let arr = list(next).concat(base).filter((c, i, a) => a.indexOf(c) === i && !asked.has(normTh(c)));
+  if (arr.length < 3) arr = base.slice();
+  $("#chips").innerHTML = arr.slice(0, 6).map((c) => `<button type="button" class="chip">${esc(c)}</button>`).join("");
 }
 function addMsg(who, html, go, L) {
   const log = $("#log");
@@ -1323,7 +1557,7 @@ function speak(text, L) {
   if (!AW.voice || !("speechSynthesis" in window)) return;
   try {
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text.replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu, ""));
+    const u = new SpeechSynthesisUtterance(Array.from(text).filter((ch) => ch.codePointAt(0) < 0x2600).join(""));
     u.lang = L === "en" ? "en-US" : "th-TH";
     const v = speechSynthesis.getVoices().find((x) => x.lang && x.lang.toLowerCase().startsWith(L === "en" ? "en" : "th"));
     if (v) u.voice = v;
@@ -1331,28 +1565,39 @@ function speak(text, L) {
     speechSynthesis.speak(u);
   } catch (e) { /* อ่านออกเสียงไม่ได้ก็ข้ามไป */ }
 }
-function ask(q) {
+async function ask(q) {
   const text = String(q || "").trim().slice(0, 300);
   if (!text || AW.busy) return;
   AW.busy = true;
+  asked.add(normTh(text));
   addMsg("me", esc(text));
-  const r = answer(text);
-  const L = r ? r.L : LANG;
+  const L = pickL(text);
   setState("think");
-  $("#sub").innerHTML = '<span class="typing" aria-label="กำลังพิมพ์"><i></i><i></i><i></i></span>';
-  const reply = r ? r.t : "";
-  const delay = 380 + Math.min(1100, reply.length * 9);
-  setTimeout(() => {
-    const plainReply = reply.replace(/\[([^\]]*)\]/g, "$1");
-    typeOut(plainReply, () => {
-      const html = r && r.html ? r.html : (r ? fmtText(reply) : "");
-      addMsg("ai", html, r && r.go, L);
-      AW.busy = false;
-      if (r && r.chips) chips(L);
-      if (r && r.autoGo) setTimeout(() => goFrom(r.go), 500);
-    });
-    speak(plainReply, L);
-  }, delay);
+  $("#sub").innerHTML = '<span class="typing" aria-label="กำลังคิด"><i></i><i></i><i></i></span>';
+  const t0 = performance.now();
+  let out = null;
+  const ai = await askAI(text, L);
+  if (ai) {
+    const p = parseReply(ai);
+    if (p.text) out = { t: p.text, emo: p.emo, go: p.go, autoGo: wantsNav(text) && !!p.go };
+  }
+  if (!out) {
+    const r = answer(text) || { t: "" };
+    out = r;
+    const wait = 380 + Math.min(1100, String(r.t).length * 9) - (performance.now() - t0);
+    if (wait > 0) await new Promise((res) => setTimeout(res, wait));
+  }
+  const spoken = String(out.t).replace(/\[([^\]]*)\]/g, "$1");
+  showEmotion(out.emo);
+  speak(spoken, L);
+  typeOut(spoken, () => {
+    addMsg("ai", out.html || fmtText(out.t), out.go, L);
+    AI.history.push({ role: "user", text }, { role: "airi", text: spoken });
+    if (AI.history.length > 16) AI.history.splice(0, AI.history.length - 16);
+    AW.busy = false;
+    chips(L, out.next);
+    if (out.autoGo) setTimeout(() => goFrom(out.go), 500);
+  });
 }
 function fmtText(s) { return esc(s).replace(/\[([^\]]+)\]/g, (_m, x) => `<span class="ph" title="${esc(U().phTip)}">${x}</span>`); }
 function goFrom(id) {
@@ -1361,8 +1606,11 @@ function goFrom(id) {
 }
 function greet() {
   const L = LANG;
-  const g = String(tx(A.greeting, L) || (L === "en" ? "Hi, I'm Airi! Ask me anything about {owner}." : "สวัสดีค่ะ หนูชื่อไอริ ถามเรื่อง{owner}ได้เลยนะคะ")).replace(/\{owner\}/g, owner(L));
-  const ghtml = fmtText(String(tx(A.greeting, L) || g).replace(/\{owner\}/g, String(tx(A.ownerCall || "", L))));
+  const raw = String(tx(A.greeting, L) || (L === "en" ? "Hi, I'm Airi! Ask me anything about {owner}." : "สวัสดีค่ะ หนูชื่อไอริ ถามเรื่อง{owner}ได้เลยนะคะ"));
+  const late = lateNight() ? (L === "en" ? " It's late — thanks for stopping by!" : " ดึกแล้วด้วย ขอบคุณที่ยังแวะมานะคะ") : "";
+  const g = raw.replace(/\{owner\}/g, owner(L)) + late;
+  const ghtml = fmtText(raw.replace(/\{owner\}/g, String(tx(A.ownerCall || "", L)))) + esc(late);
+  showEmotion("happy");
   typeOut(g, () => addMsg("ai", ghtml, "", L));
 }
 function openAiri() {
@@ -1405,7 +1653,7 @@ function initAiri() {
   const face = $("#faceImg"), big = $("#airiImg");
   face.src = src; big.src = src;
   const silhouette = '<svg viewBox="0 0 200 220" style="position:absolute;left:50%;bottom:0;height:92%;transform:translateX(-50%)" aria-hidden="true"><defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00f0ff" stop-opacity=".55"/><stop offset="1" stop-color="#ff2bd6" stop-opacity=".25"/></linearGradient></defs><circle cx="100" cy="70" r="42" fill="url(#sg)"/><path d="M20 220c6-58 40-92 80-92s74 34 80 92z" fill="url(#sg)"/></svg>';
-  big.addEventListener("error", () => { big.insertAdjacentHTML("afterend", silhouette); big.remove(); }, { once: true });
+  big.addEventListener("error", () => { if (big.getAttribute("src") !== src) { big.src = src; return; } big.insertAdjacentHTML("afterend", silhouette); big.remove(); });
   face.addEventListener("error", () => { face.remove(); }, { once: true });
   $("#bars").innerHTML = "<i></i>".repeat(10);
   setState("idle");
@@ -1448,7 +1696,7 @@ render();
 hero = startHero();
 initAiri();
 if (location.hash && document.getElementById(location.hash.slice(1))) setTimeout(() => goTo(location.hash.slice(1), false), 50);
-window.__airi = { answer, ask, openAiri };
+window.__airi = { answer, ask, openAiri, factsText, personaText, parseReply };
 })();
 </script>
 
