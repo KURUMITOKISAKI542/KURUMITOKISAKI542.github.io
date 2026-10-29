@@ -1,0 +1,1456 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<title>Flight Deck Portfolio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Aviation applicant portfolio with Airi, an AI assistant you can ask questions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+/* Layout: a night approach seen through a HUD — the page is one flight from pre-flight to landing,
+   each section a phase on the flight-plan strip; paper documents (boarding pass, checklist, logbook) sit on the instrument panel */
+:root{
+  --sky-0:#050c1a; --sky-1:#0a162b; --sky-2:#0f2140; --sky-3:#173057;
+  --ink:#e4edf8; --ink-2:#9aacc4; --ink-3:#64798f;
+  --hud:#5ce1ff; --hud-dim:rgba(92,225,255,.12);
+  --line:rgba(140,200,255,.15); --line-2:rgba(140,200,255,.30);
+  --amber:#ffb547; --on-amber:#1d1300; --ok:#5ef2a8; --route:#ff4fd8;
+  --paper:#eef3f8; --paper-ink:#0c1a2d; --paper-2:#5a6b80; --paper-line:#c3cfdc;
+  --sign:#f6c932; --sign-bg:#121212;
+  --scrim:rgba(5,12,26,.9);
+  --shadow:0 22px 60px rgba(0,0,0,.5);
+  --f-display:"Chakra Petch","IBM Plex Sans Thai","Leelawadee UI",Tahoma,sans-serif;
+  --f-body:"IBM Plex Sans Thai","Leelawadee UI","Noto Sans Thai",Tahoma,sans-serif;
+  --f-mono:"IBM Plex Mono","Cascadia Mono",Consolas,ui-monospace,monospace;
+  color-scheme:dark;
+}
+/* ไฟห้องนักบินโหมดกลางวัน (ปุ่ม DAY) */
+:root[data-panel="day"]{
+  --sky-0:#e8eff6; --sky-1:#f8fbfe; --sky-2:#dbe6f1; --sky-3:#c2d4e6;
+  --ink:#0b1a2e; --ink-2:#44586f; --ink-3:#71849b;
+  --hud:#06739a; --hud-dim:rgba(6,115,154,.08);
+  --line:rgba(16,50,92,.13); --line-2:rgba(16,50,92,.25);
+  --amber:#9c5a00; --on-amber:#ffffff; --ok:#0a7f51; --route:#bf138d;
+  --paper:#ffffff; --paper-ink:#0c1a2d; --paper-2:#5a6b80; --paper-line:#cfd9e4;
+  --scrim:rgba(232,239,246,.92);
+  --shadow:0 22px 50px rgba(16,40,80,.18);
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--sky-0);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.7;overflow-x:clip}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--sky-0)}
+img{max-width:100%;display:block}
+[hidden]{display:none!important}
+a{color:var(--hud);text-underline-offset:3px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+h1,h2,h3{font-family:var(--f-display);line-height:1.2;margin:0;text-wrap:balance}
+p{margin:0}
+.mono{font-family:var(--f-mono);letter-spacing:.06em}
+.wrap{width:100%;max-width:1180px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ph{color:inherit;text-decoration:underline dashed 1.5px var(--amber);text-underline-offset:5px;cursor:help}
+.paper .ph{text-decoration-color:#c27000}
+.th{font-family:var(--f-body);letter-spacing:0;text-transform:none}
+
+/* ------------------------------------------------------------ แถบบน + แผนการบิน */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:color-mix(in srgb,var(--sky-0) 86%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;gap:18px;min-height:62px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);white-space:nowrap}
+.brand svg{width:26px;height:26px;color:var(--hud)}
+.brand b{font-family:var(--f-display);font-size:17px;letter-spacing:.04em}
+.brand small{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:.2em;color:var(--ink-3);line-height:1.2}
+.fpl{flex:1;min-width:0;order:2}
+.fpl ol{list-style:none;margin:0;padding:0 6px;display:flex;justify-content:space-between;align-items:flex-start;position:relative}
+.fpl ol::before{content:"";position:absolute;left:18px;right:18px;top:9px;height:2px;background:repeating-linear-gradient(90deg,var(--route) 0 8px,transparent 8px 13px);opacity:.75}
+.fpl li{position:relative;z-index:1}
+.fpl a{display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;color:var(--ink-3);padding:0 4px;min-width:40px}
+.fpl .wp{width:12px;height:12px;margin-top:3px;background:var(--sky-0);border:2px solid currentColor;transform:rotate(45deg)}
+.fpl .code{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.fpl .nm{font-size:11px;color:var(--ink-3);white-space:nowrap}
+.fpl a.done{color:var(--hud)}
+.fpl a.on{color:var(--amber)}
+.fpl a.on .wp{background:var(--amber)}
+.fpl a:hover{color:var(--ink)}
+.fpl li.plane{position:absolute;top:0;left:18px;width:20px;height:20px;color:var(--ink);transform:translateX(-50%);transition:left .25s ease-out;pointer-events:none;z-index:2}
+.plane svg{width:20px;height:20px;transform:rotate(90deg)}
+.ctl{display:flex;gap:8px;align-items:center;order:3;margin-left:auto}
+.seg{display:flex;border:1px solid var(--line-2)}
+.seg button{background:transparent;border:0;padding:5px 9px;font-family:var(--f-mono);font-size:12px;cursor:pointer;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--hud);color:var(--sky-0)}
+.switch{display:flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--line-2);padding:5px 10px 5px 6px;cursor:pointer;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;color:var(--ink-2)}
+.switch .k{width:30px;height:16px;border-radius:8px;background:var(--sky-3);position:relative}
+.switch .k::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--amber);transition:transform .2s}
+.switch[aria-pressed="true"] .k::after{transform:translateX(14px)}
+@media (max-width:1080px){.fpl .nm{display:none}}
+@media (max-width:760px){
+  .top-in{gap:10px;padding-block:8px}
+  .fpl{order:4;flex-basis:100%}
+  .brand small{display:none}
+}
+
+/* ------------------------------------------------------------ hero */
+.hero{position:relative;isolation:isolate;overflow:hidden}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;z-index:-2}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,var(--scrim) 0%,color-mix(in srgb,var(--scrim) 60%,transparent) 38%,transparent 62%)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,5vw,80px);align-items:end;padding-block:clamp(56px,8vw,104px) clamp(36px,5vw,64px)}
+.eyebrow{color:var(--amber);font-size:12px;text-transform:uppercase;letter-spacing:.2em}
+.hero-name{font-size:clamp(38px,5.6vw,66px);font-weight:700;margin-top:12px;letter-spacing:.005em}
+.hero-role{margin-top:14px;font-family:var(--f-display);font-weight:600;font-size:clamp(17px,1.9vw,21px);color:var(--hud);display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.hero-role .arrow{color:var(--ink-3)}
+.hero-tag{margin-top:14px;max-width:44ch;color:var(--ink-2);font-size:17px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:11px 18px;font-family:var(--f-display);font-weight:600;font-size:15px;text-decoration:none;cursor:pointer;border:1px solid var(--line-2);background:transparent;color:var(--ink)}
+.btn svg{width:16px;height:16px}
+.btn.primary{background:var(--amber);color:var(--on-amber);border-color:var(--amber);clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.btn:hover{border-color:var(--hud)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.primary:focus-visible{outline:none;box-shadow:inset 0 0 0 3px var(--on-amber)}
+.checks{display:flex;flex-wrap:wrap;gap:6px 18px;margin:28px 0 0;padding:0;list-style:none;font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink-2)}
+.checks li{display:flex;align-items:center;gap:7px}
+.checks li::before{content:"";width:8px;height:8px;background:var(--ok);animation:lamp .5s steps(2,jump-none) both;animation-delay:calc(var(--i) * .35s + .2s)}
+@keyframes lamp{from{background:var(--ink-3)}to{background:var(--ok)}}
+.metar-band{background:var(--sky-0);border-bottom:1px solid var(--line)}
+.metar{display:flex;gap:12px;align-items:center;padding-block:12px;font-size:12px;color:var(--ink-3);overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+.metar .th{font-size:13px}
+.metar b{color:var(--ok);font-weight:500}
+@media (max-width:900px){
+  .hero-grid{grid-template-columns:minmax(0,1fr);align-items:start}
+  .hero::before{background:linear-gradient(180deg,var(--scrim) 0%,color-mix(in srgb,var(--scrim) 72%,transparent) 55%,color-mix(in srgb,var(--scrim) 40%,transparent))}
+}
+
+/* บัตรขึ้นเครื่อง */
+.pass{--stub:136px;position:relative;display:grid;grid-template-columns:minmax(0,1fr) var(--stub);background:var(--paper);color:var(--paper-ink);border-radius:12px;box-shadow:var(--shadow);transform:rotate(-1.4deg);max-width:580px;width:100%;justify-self:end}
+.pass::before,.pass::after{content:"";position:absolute;right:calc(var(--stub) - 10px);width:20px;height:20px;border-radius:50%;background:var(--sky-0)}
+.pass::before{top:-10px}.pass::after{bottom:-10px}
+.pass-main{padding:16px 20px 16px;min-width:0;display:grid;gap:12px}
+.pass-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--paper-line)}
+.pass-head b{font-family:var(--f-mono);font-size:12px;letter-spacing:.22em}
+.pass-head span{font-size:12px;color:var(--paper-2)}
+.pass-body{display:grid;grid-template-columns:96px minmax(0,1fr);gap:16px;align-items:center}
+.pass-photo{margin:0;width:96px;aspect-ratio:3/4;border-radius:6px;overflow:hidden;background:#d7e0ea}
+.pass-photo img,.pass-photo .phimg{width:100%;height:100%;object-fit:cover}
+.pk{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;color:var(--paper-2);text-transform:uppercase}
+.pass-pax b{display:block;font-family:var(--f-display);font-size:19px;line-height:1.3;overflow-wrap:anywhere}
+.route-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;margin-top:10px}
+.apt b{display:block;font-family:var(--f-display);font-size:32px;line-height:1;letter-spacing:.02em}
+.apt small{display:block;font-size:11px;color:var(--paper-2);line-height:1.35;max-width:12ch}
+.apt.to{text-align:right}.apt.to small{margin-left:auto}
+.leg{position:relative;height:20px}
+.leg::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:2px dotted var(--paper-line)}
+.leg svg{position:absolute;left:50%;top:50%;width:20px;height:20px;transform:translate(-50%,-50%) rotate(90deg);color:var(--paper-ink);background:var(--paper)}
+.pass-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0;padding-top:10px;border-top:1px solid var(--paper-line)}
+.pass-fields div{min-width:0}
+.pass-fields dt{font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;color:var(--paper-2)}
+.pass-fields dd{margin:0;font-family:var(--f-mono);font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.pass-stub{border-left:2px dashed var(--paper-line);padding:16px 14px;display:grid;align-content:space-between;gap:10px;min-width:0}
+.pass-stub b{display:block;font-family:var(--f-mono);font-size:14px;overflow-wrap:anywhere}
+.barcode{width:100%;height:56px;color:var(--paper-ink)}
+@media (max-width:560px){
+  .pass{grid-template-columns:minmax(0,1fr);transform:none}
+  .pass::before,.pass::after{display:none}
+  .pass-stub{border-left:0;border-top:2px dashed var(--paper-line);grid-template-columns:1fr 1fr;align-items:end}
+  .pass-stub .barcode{grid-column:1/-1;height:44px}
+  .pass-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pass-body{grid-template-columns:80px minmax(0,1fr)}
+  .pass-photo{width:80px}
+  .apt b{font-size:26px}
+}
+
+/* ------------------------------------------------------------ หัวข้อแต่ละช่วงบิน */
+.sec{padding-block:clamp(64px,8vw,108px);border-bottom:1px solid var(--line);scroll-margin-top:70px}
+.sec.alt{background:var(--sky-1)}
+.sec-head{display:grid;gap:12px;margin-bottom:clamp(28px,4vw,48px)}
+.phase{display:flex;align-items:center;gap:12px;color:var(--amber);font-family:var(--f-mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase}
+.phase .fix{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid var(--hud)}
+.phase .rule{flex:1;height:1px;background:var(--line-2)}
+.sec h2{font-size:clamp(28px,3.8vw,42px)}
+.sec-sub{color:var(--ink-2);max-width:62ch}
+#awards{scroll-margin-top:90px}
+@media (max-width:760px){.sec{scroll-margin-top:112px}#awards{scroll-margin-top:124px}}
+.flash{animation:flash 1.4s ease-out}
+@keyframes flash{0%{box-shadow:inset 0 0 0 2px var(--amber)}100%{box-shadow:inset 0 0 0 2px transparent}}
+h3.sub{font-size:20px;display:flex;align-items:center;gap:10px;margin:48px 0 18px}
+h3.sub::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* PRE-FLIGHT */
+.pf{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(28px,4vw,64px);align-items:start}
+.about{font-size:18px;line-height:1.8;max-width:60ch}
+.gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:36px}
+.gauge{display:grid;justify-items:center;text-align:center;gap:4px;padding:14px 8px 12px;border:1px solid var(--line);background:linear-gradient(180deg,var(--hud-dim),transparent 70%)}
+.gauge svg{width:100%;max-width:150px;height:auto;overflow:visible}
+.gauge .lbl{font-family:var(--f-display);font-weight:600;font-size:15px}
+.gauge .note{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+.g-face{fill:var(--sky-0);stroke:var(--line-2);stroke-width:1}
+.g-tick{stroke:var(--ink-3);stroke-width:1.2}
+.g-tick.major{stroke:var(--ink-2);stroke-width:2}
+.g-num{fill:var(--ink-3);font-family:var(--f-mono);font-size:9px}
+.g-arc{fill:none;stroke:var(--hud);stroke-width:5;stroke-linecap:butt}
+.g-seg{fill:none;stroke:var(--sky-3);stroke-width:9}
+.g-seg.on{stroke:var(--hud)}
+.g-needle{stroke:var(--amber);stroke-width:2.6;stroke-linecap:round;transform-origin:75px 75px;transform:rotate(var(--a));animation:settle 1.1s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes settle{from{transform:rotate(calc(var(--a) - 26deg))}to{transform:rotate(var(--a))}}
+.g-hub{fill:var(--amber)}
+.g-val{fill:var(--ink);font-family:var(--f-mono);font-size:17px;font-weight:600;text-anchor:middle}
+.g-big{fill:var(--ink);font-family:var(--f-display);font-size:30px;font-weight:700;text-anchor:middle}
+.ph-t{fill:var(--amber)}
+.g-cap{fill:var(--ink-3);font-family:var(--f-mono);font-size:8.5px;letter-spacing:.14em;text-anchor:middle}
+.checklist{border:1px solid var(--line-2);background:var(--sky-2)}
+.checklist > header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;background:var(--amber);color:var(--on-amber);font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;font-weight:600}
+.checklist > header .th{font-size:13px;font-weight:600;margin-left:8px}
+.cl-group{padding:14px 16px 6px}
+.cl-group + .cl-group{border-top:1px solid var(--line)}
+.cl-group h3{font-family:var(--f-display);font-size:13px;letter-spacing:.02em;color:var(--hud);margin-bottom:6px;font-weight:600}
+.cl-row{display:flex;align-items:baseline;gap:8px;padding:3px 0;font-size:15px}
+.cl-row .nm{min-width:0}
+.cl-row .lead{flex:1;min-width:24px;border-bottom:1px dotted var(--ink-3);transform:translateY(-5px)}
+.cl-row .st{font-family:var(--f-mono);font-size:13px;color:var(--ok);white-space:nowrap}
+@media (max-width:900px){.pf{grid-template-columns:minmax(0,1fr)}}
+
+/* TAXI */
+.taxi{display:grid;gap:16px;position:relative;padding-left:64px;max-width:860px}
+.taxi::before{content:"";position:absolute;left:22px;top:6px;bottom:6px;width:4px;background:repeating-linear-gradient(180deg,var(--sign) 0 16px,transparent 16px 28px)}
+.taxi-item{position:relative;padding:16px 20px 18px;border:1px solid var(--line);background:var(--sky-0)}
+.sec.alt .taxi-item{background:var(--sky-0)}
+.sign{position:absolute;left:-64px;top:14px;width:48px;height:42px;display:grid;place-items:center;background:var(--sign-bg);color:var(--sign);border:2px solid var(--sign);font:700 22px/1 var(--f-display)}
+.yrs{font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:.04em;color:var(--amber)}
+.taxi-item h3{font-size:20px;margin-top:4px}
+.place{color:var(--hud);font-weight:500;margin-top:2px}
+.detail{color:var(--ink-2);margin-top:6px}
+
+/* TAKEOFF */
+.why{font-family:var(--f-display);font-size:clamp(20px,2.3vw,26px);line-height:1.65;font-weight:500;max-width:36em}
+.calls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:44px}
+.call{border-top:2px solid var(--hud);padding-top:14px}
+.call .c{font-family:var(--f-mono);color:var(--amber);font-size:12px;letter-spacing:.18em}
+.call h3{font-size:19px;margin-top:8px}
+.call p{color:var(--ink-2);margin-top:6px}
+@media (max-width:820px){.calls{grid-template-columns:minmax(0,1fr)}}
+
+/* CLIMB — สมุดบันทึก */
+.logwrap{overflow-x:auto;border:1px solid var(--line-2);background:var(--sky-0)}
+table.log{width:100%;border-collapse:collapse;min-width:780px;font-size:15px}
+.log th{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;font-weight:500;text-align:left;color:var(--ink-2);background:var(--sky-2);padding:10px 12px;border-bottom:1px solid var(--line-2);border-right:1px solid var(--line);vertical-align:bottom;white-space:nowrap}
+.log th small{display:block;font-family:var(--f-body);letter-spacing:0;font-size:12px;color:var(--ink-3);text-transform:none}
+.log td{padding:12px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top}
+.log td:last-child,.log th:last-child{border-right:0}
+.log .d{font-family:var(--f-display);font-weight:600;font-size:14px;white-space:nowrap;color:var(--amber)}
+.log .t{font-weight:600}
+.log .n{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.log tfoot td{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink-2);background:var(--sky-2);border-bottom:0}
+.log tfoot .n{color:var(--ink);font-size:15px}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:transparent;border:1px solid var(--line-2);color:var(--hud);padding:3px 8px;font-family:var(--f-mono);font-size:11px;cursor:pointer;margin-top:6px}
+.icon-btn svg{width:14px;height:14px}
+@media (max-width:720px){
+  table.log{min-width:0}
+  .log thead{display:none}
+  .log tbody tr{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .log td{border:0;padding:0}
+  .log td.t{font-size:17px}
+  .log td.n::before{content:attr(data-l) " · ";color:var(--ink-3);font-family:var(--f-body)}
+  .log td.n{text-align:left}
+  .log td[data-l]:not(.n):not(.d):not(.t)::before{content:attr(data-l);display:block;font-family:var(--f-body);font-size:12px;color:var(--ink-3)}
+  .logwrap{overflow:visible}
+  .log tfoot tr{display:flex;justify-content:space-between}
+}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.shot{display:grid;text-align:left;background:var(--sky-0);border:1px solid var(--line);padding:0;cursor:zoom-in}
+.shot img,.shot .phimg{width:100%;aspect-ratio:4/3;object-fit:cover}
+.shot span{padding:9px 12px;font-size:14px;color:var(--ink-2)}
+.shot:hover{border-color:var(--hud)}
+
+/* รูปที่ยังไม่ได้ใส่ */
+img[data-kind]:not(.ok){background:repeating-linear-gradient(135deg,var(--sky-2) 0 10px,var(--sky-1) 10px 20px)}
+.paper img[data-kind]:not(.ok){background:repeating-linear-gradient(135deg,#dfe6ee 0 8px,#e9eef4 8px 16px)}
+.phimg{display:grid;place-items:center;align-content:center;gap:6px;padding:12px;text-align:center;background:repeating-linear-gradient(135deg,var(--sky-2) 0 10px,var(--sky-1) 10px 20px);color:var(--ink-3);font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;border:1px dashed var(--line-2)}
+.phimg svg{width:26px;height:26px;color:var(--ink-3)}
+.paper .phimg{background:repeating-linear-gradient(135deg,#dfe6ee 0 8px,#e9eef4 8px 16px);color:#6c7c8f;border-color:#c3cfdc}
+.paper .phimg svg{color:#6c7c8f}
+
+/* CRUISE */
+.feature{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);border:1px solid var(--line-2);background:var(--sky-0)}
+.feature-media{position:relative;min-height:300px;overflow:hidden;background:radial-gradient(120% 90% at 50% 100%,rgba(255,79,216,.22),transparent 60%),linear-gradient(180deg,#0a1328,#120a22);border-right:1px solid var(--line-2)}
+.feature-media > img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.feature-media .airi-cut{position:absolute;left:50%;bottom:0;height:94%;width:auto;max-width:none;object-fit:contain;transform:translateX(-50%)}
+.feature-media .gridbg{position:absolute;inset:0;background-image:linear-gradient(rgba(0,240,255,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,.09) 1px,transparent 1px);background-size:26px 26px}
+.feature-media .hudtag{position:absolute;left:14px;top:12px;font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:#00f0ff;display:flex;align-items:center;gap:8px}
+.feature-media .hudtag i{width:8px;height:8px;border-radius:50%;background:#ff2bd6}
+.feature-body{padding:clamp(20px,3vw,32px);display:grid;gap:14px;align-content:start;min-width:0}
+.feature-body h3{font-size:clamp(22px,2.4vw,28px)}
+.feature-body p{color:var(--ink-2)}
+.hl{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.hl li{display:grid;grid-template-columns:14px minmax(0,1fr);gap:10px;font-size:15px}
+.hl li::before{content:"";width:8px;height:8px;margin-top:9px;border:2px solid var(--route);transform:rotate(45deg)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--f-display);font-weight:500;font-size:12.5px;letter-spacing:.02em;padding:2px 9px;border:1px solid var(--line-2);color:var(--ink-2)}
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px;margin-top:16px}
+.proj{display:grid;grid-template-columns:220px minmax(0,1fr);border:1px solid var(--line);background:var(--sky-0);min-width:0}
+.proj > img,.proj > .phimg{width:100%;height:100%;min-height:160px;object-fit:cover}
+@media (max-width:560px){.proj{grid-template-columns:minmax(0,1fr)}.proj > img,.proj > .phimg{height:auto;aspect-ratio:16/9;min-height:0}}
+.proj-b{padding:16px 18px 18px;display:grid;gap:10px;align-content:start}
+.proj-b h3{font-size:19px}
+.proj-b p{color:var(--ink-2);font-size:15px}
+.awards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.award{display:grid;grid-template-columns:72px minmax(0,1fr);gap:14px;align-items:center;text-align:left;background:var(--sky-0);border:1px solid var(--line);padding:12px;cursor:zoom-in}
+.award:hover{border-color:var(--hud)}
+.award img,.award .phimg{width:72px;height:72px;object-fit:cover;padding:0}
+.award .phimg{font-size:0}
+.award .yr{font-family:var(--f-display);font-weight:600;font-size:13px;color:var(--amber);letter-spacing:.04em}
+.award b{display:block;font-family:var(--f-display);font-size:16px;line-height:1.35}
+.award small{display:block;color:var(--ink-2);font-size:13px}
+@media (max-width:860px){.feature{grid-template-columns:minmax(0,1fr)}.feature-media{border-right:0;border-bottom:1px solid var(--line-2)}}
+
+/* APPROACH — เส้นทางสีม่วงชมพู (magenta line) */
+.route{--n:4;position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:20px;padding-top:44px}
+.route::before{content:"";position:absolute;top:19px;left:calc(50% / var(--n));right:calc(50% / var(--n));height:3px;background:var(--route)}
+.wpt{position:relative;display:grid;gap:6px;justify-items:center;text-align:center}
+.wpt::before{content:"";position:absolute;top:-34px;left:50%;width:0;height:0;transform:translateX(-50%);border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:15px solid var(--route)}
+.wpt.dest::before{width:22px;height:22px;top:-37px;border:3px solid var(--route);border-radius:50%;background:var(--sky-0)}
+.wpt .eta{font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:.04em;color:var(--amber)}
+.wpt h3{font-size:18px}
+.wpt p{color:var(--ink-2);font-size:15px;max-width:30ch}
+@media (max-width:820px){
+  .route{grid-template-columns:minmax(0,1fr);padding-top:0;padding-left:44px;gap:26px}
+  .route::before{top:8px;bottom:8px;left:19px;right:auto;width:3px;height:auto}
+  .wpt{justify-items:start;text-align:left}
+  .wpt::before{top:4px;left:-25px;transform:translateX(-50%)}
+  .wpt.dest::before{top:0;left:-25px}
+}
+
+/* LANDING — หอบังคับการบิน */
+.piano{height:46px;margin-bottom:34px;background:repeating-linear-gradient(90deg,var(--ink) 0 16px,transparent 16px 30px);opacity:.14;-webkit-mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.tower{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:clamp(24px,4vw,56px);align-items:start}
+.freqs{border:1px solid var(--line-2);background:var(--sky-1)}
+.freqs > header{padding:10px 16px;font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--hud);border-bottom:1px solid var(--line-2);display:flex;justify-content:space-between;gap:10px}
+.freq{display:grid;grid-template-columns:104px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.freq:last-child{border-bottom:0}
+.freq .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink-3)}
+.freq .v{font-size:17px;overflow-wrap:anywhere;min-width:0}
+.freq .v a{color:var(--ink);text-decoration:none}
+.freq .v a:hover{color:var(--hud);text-decoration:underline}
+.freq .acts{display:flex;gap:6px}
+.closing{font-family:var(--f-display);font-size:clamp(20px,2.2vw,24px);line-height:1.6;max-width:30ch}
+.rwy{font-family:var(--f-display);font-weight:700;font-size:clamp(90px,14vw,170px);line-height:.9;color:transparent;-webkit-text-stroke:1.5px var(--line-2);margin-top:28px;letter-spacing:.04em;user-select:none}
+.rwy small{display:block;font-family:var(--f-mono);font-size:12px;letter-spacing:.22em;color:var(--ink-3);-webkit-text-stroke:0;margin-top:10px}
+@media (max-width:860px){.tower{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:480px){.freq{grid-template-columns:minmax(0,1fr) auto}.freq .k{grid-column:1/-1}}
+
+footer.foot{padding-block:28px calc(28px + 64px);color:var(--ink-3);font-size:13px}
+.foot .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
+
+/* แถบเตือนโหมดร่าง */
+.draft{background:var(--amber);color:var(--on-amber);font-size:13.5px;line-height:1.5}
+.draft .wrap{display:flex;gap:12px;align-items:center;padding-block:8px}
+.draft b{font-family:var(--f-mono);font-size:11px;letter-spacing:.16em;flex:none}
+.draft span{flex:1;min-width:0}
+.draft button{flex:none;background:transparent;border:1px solid currentColor;color:inherit;cursor:pointer;font-size:12px;line-height:1;padding:5px 9px;font-family:var(--f-display);font-weight:600}
+
+/* ขยายรูป */
+.lb{position:fixed;inset:0;z-index:70;background:rgba(2,6,14,.88);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.lb figure{margin:0;display:grid;gap:12px;justify-items:center;max-width:min(1000px,100%)}
+.lb img{max-height:78vh;width:auto;border:1px solid rgba(140,200,255,.3)}
+.lb figcaption{color:#dfe8f3;text-align:center}
+.lb .x{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));background:transparent;border:1px solid rgba(140,200,255,.4);color:#dfe8f3;width:40px;height:40px;cursor:pointer;font-size:20px}
+
+/* ------------------------------------------------------------ ไอริ (จอ HUD มุมขวาล่าง — มืดเสมอเหมือนจอในห้องนักบิน) */
+.airi{--a-bg:#070d1c;--a-bg2:#0e1730;--a-cyan:#00f0ff;--a-pink:#ff2bd6;--a-amber:#ffc400;--a-ink:#e8fbff;--a-ink2:#93b9c9;--a-line:rgba(0,240,255,.22);
+  position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:50;font-family:var(--f-display);color:var(--a-ink)}
+.cf{--c:12px;display:block;clip-path:polygon(var(--c) 0,calc(100% - var(--c) * 2.2) 0,100% calc(var(--c) * 2.2),100% calc(100% - var(--c)),calc(100% - var(--c)) 100%,calc(var(--c) * 2.2) 100%,0 calc(100% - var(--c) * 2.2),0 var(--c))}
+.cf-line{background:var(--a-cyan);padding:1.5px}
+.launch{display:block;background:transparent;border:0;padding:0;cursor:pointer;filter:drop-shadow(0 0 9px rgba(0,240,255,.55)) drop-shadow(0 10px 24px rgba(0,0,0,.45))}
+.launch .cf-line{--c:10px}
+.launch-in{--c:9px;display:flex;align-items:center;gap:12px;padding:6px 16px 6px 6px;background:linear-gradient(180deg,var(--a-bg2),var(--a-bg))}
+.face{width:52px;height:52px;overflow:hidden;position:relative;background:linear-gradient(180deg,#152447,#1b0f2e)}
+.face img{position:absolute;left:50%;top:0;width:220%;max-width:none;transform:translateX(-50%);top:-14%}
+.face::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(180deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px)}
+.launch-txt{display:grid;text-align:left;line-height:1.25}
+.launch-txt b{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--a-cyan);display:flex;align-items:center;gap:7px}
+.launch-txt small{font-size:13px;color:var(--a-ink)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--a-cyan);box-shadow:0 0 8px currentColor;flex:none;animation:blink 1.2s steps(2,jump-none) infinite}
+@keyframes blink{50%{opacity:.35}}
+.bubble{position:absolute;right:0;bottom:calc(100% + 12px);width:max-content;max-width:min(270px,calc(100vw - 48px));padding:10px 32px 10px 14px;background:var(--a-bg);border:1px solid var(--a-pink);font-family:var(--f-body);font-size:14px;line-height:1.55;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.bubble::after{content:"";position:absolute;right:28px;bottom:-7px;width:12px;height:12px;background:var(--a-bg);border-right:1px solid var(--a-pink);border-bottom:1px solid var(--a-pink);transform:rotate(45deg)}
+.bubble button{position:absolute;top:4px;right:6px;background:transparent;border:0;color:var(--a-ink2);cursor:pointer;font-size:16px;line-height:1}
+.panel{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(396px,calc(100vw - 32px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)));height:min(680px,calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));filter:drop-shadow(0 0 12px rgba(0,240,255,.45)) drop-shadow(0 24px 40px rgba(0,0,0,.5))}
+.panel > .cf-line{--c:14px;height:100%}
+.core{--c:13px;height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#081125 0%,#0b0f24 55%,#170a26 100%)}
+.hud{display:flex;align-items:center;gap:9px;padding:13px 14px 9px 24px;font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;color:var(--a-cyan)}
+.hud .st{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud .clock{color:var(--a-pink)}
+.hud button{background:transparent;border:1px solid transparent;color:var(--a-ink2);width:30px;height:30px;display:grid;place-items:center;cursor:pointer;padding:0}
+.hud button:hover{color:var(--a-ink);border-color:var(--a-line)}
+.hud button[aria-pressed="true"]{color:var(--a-pink);border-color:rgba(255,43,214,.5)}
+.hud svg{width:16px;height:16px}
+.feed{position:relative;flex:none;height:clamp(190px,36vh,292px);margin:0 12px;overflow:hidden;border:1px solid var(--a-line);background:linear-gradient(180deg,rgba(14,26,52,.9),rgba(32,10,44,.9))}
+.feed::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(0,240,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,.08) 1px,transparent 1px);background-size:24px 24px;animation:gridmove 6s linear infinite}
+@keyframes gridmove{to{background-position:0 24px}}
+.feed::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px),linear-gradient(180deg,transparent 0 46%,rgba(0,240,255,.08) 50%,transparent 54%);background-size:auto,100% 260%;animation:scan 5s linear infinite}
+@keyframes scan{from{background-position:0 0,0 110%}to{background-position:0 0,0 -10%}}
+.feed img.airi-img{position:absolute;left:50%;bottom:-2px;height:104%;width:auto;max-width:none;transform:translateX(-50%);animation:bob 4s ease-in-out infinite}
+@keyframes bob{50%{transform:translate(-50%,-5px)}}
+.feed.glitch img.airi-img{animation:glitch .18s steps(2) 1;filter:drop-shadow(3px 0 rgba(255,43,214,.7)) drop-shadow(-3px 0 rgba(0,240,255,.7))}
+@keyframes glitch{0%{transform:translate(calc(-50% - 4px),0)}50%{transform:translate(calc(-50% + 5px),1px)}100%{transform:translate(-50%,0)}}
+.bars{position:absolute;left:8px;bottom:56px;display:grid;gap:3px;z-index:2}
+.bars i{display:block;width:9px;height:5px;background:var(--a-cyan);opacity:.2;transition:opacity .08s}
+.ticks{position:absolute;right:6px;top:18px;bottom:60px;width:8px;z-index:2;background:repeating-linear-gradient(180deg,rgba(0,240,255,.5) 0 1px,transparent 1px 22px)}
+.a-sub{position:absolute;left:24px;right:16px;bottom:10px;z-index:3}
+.a-sub .cf-line{--c:7px;background:var(--a-pink);padding:1.4px}
+.a-sub-in{--c:6px;background:rgba(5,8,20,.93);padding:8px 12px;max-height:6.4em;overflow-y:auto;scrollbar-width:none;font-weight:600;font-size:15px;line-height:1.55;min-height:2.2em}
+.a-sub-in::-webkit-scrollbar{display:none}
+.typing{display:inline-flex;gap:4px;padding:6px 0}
+.typing i{width:6px;height:6px;background:var(--a-amber);animation:tdot 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes tdot{50%{opacity:.2}}
+.log-a{flex:1;min-height:0;overflow-y:auto;padding:12px 14px 6px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;scrollbar-color:rgba(0,240,255,.35) transparent}
+.msg{max-width:90%;font-family:var(--f-body);font-size:14.5px;line-height:1.6;padding:8px 12px;border:1px solid;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;border-color:rgba(0,240,255,.42);background:rgba(0,240,255,.07)}
+.msg.ai{align-self:flex-start;border-color:rgba(255,43,214,.42);background:rgba(255,43,214,.06)}
+.msg .who{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;color:var(--a-pink);margin-bottom:2px}
+.msg .ph{color:var(--a-amber)}
+.goto{display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:transparent;border:1px solid rgba(255,196,0,.55);color:var(--a-amber);padding:3px 10px;font-family:var(--f-display);font-weight:600;font-size:12.5px;cursor:pointer}
+.goto svg{width:13px;height:13px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:4px 14px 8px;scrollbar-width:none;flex:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;background:rgba(0,240,255,.06);border:1px solid var(--a-line);color:var(--a-ink);padding:5px 11px;font-family:var(--f-body);font-size:13px;cursor:pointer;white-space:nowrap}
+.chip:hover{border-color:var(--a-cyan)}
+.ask{display:flex;gap:8px;padding:6px 14px 16px;flex:none}
+.ask input{flex:1;min-width:0;background:rgba(0,0,0,.35);border:1px solid var(--a-line);color:var(--a-ink);padding:10px 12px;font-family:var(--f-body);font-size:16px}
+.ask input::placeholder{color:var(--a-ink2)}
+.ask input:focus-visible{outline:1px solid var(--a-cyan);outline-offset:0}
+.ask button{background:var(--a-cyan);color:#041018;border:0;padding:0 16px;font-family:var(--f-display);font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px}
+.ask button svg{width:15px;height:15px}
+.corner{position:absolute;background:var(--a-pink);z-index:4}
+.corner.a{left:0;top:24px;width:3px;height:34px}
+.corner.b{right:0;bottom:24px;width:3px;height:34px}
+.corner.c{right:24px;bottom:0;width:34px;height:3px}
+.airi.open .launch,.airi.open .bubble{display:none}
+@media (max-width:560px){
+  .panel{left:calc(8px + env(safe-area-inset-left,0px));right:calc(8px + env(safe-area-inset-right,0px));bottom:calc(8px + env(safe-area-inset-bottom,0px));width:auto;height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+  .feed{height:30vh}
+  .hud{font-size:11px;letter-spacing:.04em}
+  .a-sub-in{max-height:4.8em;font-size:14.5px}
+  .launch-txt small{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+@media print{
+  .top,.airi,.draft,.hero canvas,.lb{display:none!important}
+  body{background:#fff;color:#000}
+}
+</style>
+<script src="content.js"></script>
+
+<div class="draft" id="draft" hidden role="status"></div>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="#top" aria-label="กลับขึ้นบน">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 2.5l2 6.2 6.6.3-5.1 4 1.8 6.5L12 15.8 6.7 19.5l1.8-6.5-5.1-4 6.6-.3z"/></svg>
+      <span><b id="brandName">CALLSIGN</b><small>FLIGHT DECK PORTFOLIO</small></span>
+    </a>
+    <nav class="fpl" aria-label="Flight plan"><ol id="fpl"></ol></nav>
+    <div class="ctl">
+      <div class="seg" id="langSeg" role="group" aria-label="Language">
+        <button type="button" data-lang="th" aria-pressed="true">TH</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <button type="button" class="switch" id="panelSwitch" aria-pressed="false" title="Panel lighting"><span class="k" aria-hidden="true"></span><span id="panelLbl">NIGHT</span></button>
+    </div>
+  </div>
+</header>
+
+<section class="hero" id="top">
+  <canvas id="hudCanvas" aria-hidden="true"></canvas>
+  <div class="wrap hero-grid" id="hero"></div>
+</section>
+<div class="metar-band"><div class="wrap metar mono" id="metar"></div></div>
+
+<main id="main"></main>
+
+<footer class="foot"><div class="wrap" id="foot"></div></footer>
+
+<div class="airi" id="airi">
+  <div class="bubble" id="bubble" hidden><span id="bubbleTxt"></span><button type="button" id="bubbleX" aria-label="ปิดข้อความ">×</button></div>
+  <button type="button" class="launch" id="launch" aria-expanded="false" aria-controls="panel">
+    <span class="cf cf-line"><span class="cf launch-in">
+      <span class="face"><img id="faceImg" alt=""></span>
+      <span class="launch-txt"><b><i class="dot" aria-hidden="true"></i>AIRI.EXE</b><small id="launchSub">ถามไอริได้นะ</small></span>
+    </span></span>
+  </button>
+  <section class="panel" id="panel" role="dialog" aria-labelledby="hudState" hidden>
+    <div class="cf cf-line"><div class="cf core">
+      <span class="corner a"></span><span class="corner b"></span><span class="corner c"></span>
+      <div class="hud">
+        <i class="dot" id="hudDot" aria-hidden="true"></i>
+        <span class="st" id="hudState">AIRI.EXE // ONLINE</span>
+        <span class="clock" id="hudClock">--:--</span>
+        <button type="button" id="voiceBtn" aria-pressed="false" title="ให้ไอริอ่านออกเสียง" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg>
+        </button>
+        <button type="button" id="closeBtn" aria-label="ปิด">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="feed" id="feed">
+        <img class="airi-img" id="airiImg" alt="ไอริ ผู้ช่วย AI">
+        <div class="bars" id="bars" aria-hidden="true"></div>
+        <div class="ticks" aria-hidden="true"></div>
+        <div class="a-sub"><div class="cf cf-line"><div class="cf a-sub-in" id="sub" aria-live="polite"></div></div></div>
+      </div>
+      <div class="log-a" id="log"></div>
+      <div class="chips" id="chips"></div>
+      <form class="ask" id="ask" autocomplete="off">
+        <input id="askInput" maxlength="300" aria-label="พิมพ์คำถามถึงไอริ">
+        <button type="submit" id="askBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12l16-8-6 16-2-7z"/></svg><span id="askLbl">ส่ง</span></button>
+      </form>
+    </div></div>
+  </section>
+</div>
+
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="ภาพขยาย">
+  <button type="button" class="x" id="lbX" aria-label="ปิด">✕</button>
+  <figure><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure>
+</div>
+
+<script>
+(() => {
+"use strict";
+const C = window.PORTFOLIO || {};
+const A = C.airi || {};
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const store = {
+  get(k) { try { return localStorage.getItem("fdp:" + k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem("fdp:" + k, v); } catch (e) { /* ไม่มีที่เก็บก็ไม่เป็นไร */ } },
+};
+let LANG = (store.get("lang") || C.lang || "th") === "en" ? "en" : "th";
+let PH = 0;
+
+const ICON = {
+  plane: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 15.5v-2l-8-5V3.5a1.5 1.5 0 00-3 0V8.5l-8 5v2l8-2.5V18l-2.5 1.8V21l4-1.2 4 1.2v-1.2L13 18v-5z"/></svg>',
+  photo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>',
+  person: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.5-6.5 8-6.5s7 2 8 6.5"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V4h11"/></svg>',
+  ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg>',
+  go: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg>',
+  chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 4v15M6 13l6 6 6-6"/></svg>',
+};
+
+// ---------------------------------------------------------------- ข้อความ 2 ภาษา
+const UI = {
+  th: {
+    phases: { preflight: "ข้อมูลผู้สมัคร", taxi: "เส้นทางการศึกษา", takeoff: "ทำไมต้องการบิน", climb: "บันทึกกิจกรรม", cruise: "ผลงานและรางวัล", approach: "แผนการบินของชีวิต", landing: "ติดต่อหอบังคับการบิน" },
+    subs: {
+      preflight: "ตรวจความพร้อมก่อนบิน — ตัวตน หน้าปัดผลการเรียน และเช็กลิสต์ทักษะ",
+      taxi: "เส้นทางที่ผ่านมาก่อนถึงรันเวย์",
+      takeoff: "แรงยกที่ทำให้ตัดสินใจขึ้นบิน",
+      climb: "บันทึกกิจกรรมแบบสมุดบันทึกชั่วโมงบิน",
+      cruise: "สิ่งที่สร้างและสิ่งที่ได้รับระหว่างทาง",
+      approach: "จุดหมายถัดไปตามเส้นทางสีม่วงชมพูบนจอนำร่อง",
+      landing: "ช่องทางติดต่อ — ยินดีรับฟังทุกคำถาม",
+    },
+    navShort: { preflight: "แนะนำตัว", taxi: "การศึกษา", takeoff: "แรงบันดาลใจ", climb: "กิจกรรม", cruise: "ผลงาน", approach: "เป้าหมาย", landing: "ติดต่อ" },
+    start: "เริ่มอ่านเช็กลิสต์", talk: "คุยกับไอริ", pass: "บัตรขึ้นเครื่อง", applicant: "ผู้สมัคร",
+    checklist: "เช็กลิสต์ทักษะ", complete: "ตรวจครบ", gallery: "ภาพกิจกรรม", projects: "ผลงาน", awards: "รางวัลและเกียรติบัตร",
+    log: { date: "วันที่", act: "กิจกรรม", org: "ผู้จัด / สถานที่", role: "บทบาท", hrs: "ชั่วโมง", rem: "หมายเหตุ", total: "รวมชั่วโมงทั้งหมด", photo: "ดูรูป" },
+    freq: "ความถี่ติดต่อ", copy: "คัดลอก", copied: "คัดลอกแล้ว", open: "เปิด", selectHint: "เลือกข้อความไว้แล้ว กด Ctrl+C",
+    link: "ดูผลงาน", phTip: "ข้อความตัวอย่าง — แก้ใน content.js", imgMissing: "ใส่รูป",
+    draft: (n) => `โหมดร่าง · ยังมีข้อความตัวอย่าง ${n} จุด (ขีดเส้นประสีส้ม) แก้ได้ในไฟล์ content.js`,
+    metarTip: "รายงานอากาศจำลอง: ลมสงบ ท้องฟ้าโปร่ง ทัศนวิสัยดี — พร้อมบิน",
+    footer: "พอร์ตโฟลิโอสำหรับยื่น", airiNote: "ไอริคือ AI VTuber ที่เจ้าของเว็บสร้างเอง",
+    ask: "พิมพ์คำถาม…", send: "ส่ง", launch: "ถามไอริได้นะ", voice: "ให้ไอริอ่านออกเสียง",
+    day: "DAY", night: "NIGHT", rwyCap: "RWY 19 · CLEARED TO LAND",
+  },
+  en: {
+    phases: { preflight: "Applicant profile", taxi: "Education", takeoff: "Why aviation", climb: "Activity logbook", cruise: "Projects & awards", approach: "Life flight plan", landing: "Contact tower" },
+    subs: {
+      preflight: "Pre-flight check — who I am, my instruments and a skills checklist",
+      taxi: "The route that led to the runway",
+      takeoff: "The lift that made me decide to fly",
+      climb: "Activities recorded like a pilot's logbook",
+      cruise: "What I have built and earned along the way",
+      approach: "Next waypoints along the magenta line",
+      landing: "Ways to reach me — every question is welcome",
+    },
+    navShort: { preflight: "Profile", taxi: "Education", takeoff: "Why", climb: "Activities", cruise: "Projects", approach: "Goals", landing: "Contact" },
+    start: "Start the checklist", talk: "Talk to Airi", pass: "Boarding pass", applicant: "Applicant",
+    checklist: "Skills checklist", complete: "Complete", gallery: "Gallery", projects: "Projects", awards: "Awards & certificates",
+    log: { date: "Date", act: "Activity", org: "Organizer / place", role: "Role", hrs: "Hours", rem: "Remarks", total: "Total hours", photo: "Photo" },
+    freq: "Frequencies", copy: "Copy", copied: "Copied", open: "Open", selectHint: "Text selected — press Ctrl+C",
+    link: "View project", phTip: "Example text — edit in content.js", imgMissing: "Add image",
+    draft: (n) => `Draft mode · ${n} example fields left (dashed orange). Edit them in content.js`,
+    metarTip: "Sample weather report: calm wind, clear sky, good visibility — ready to fly",
+    footer: "Portfolio for", airiNote: "Airi is an AI VTuber made by the site owner",
+    ask: "Type a question…", send: "Send", launch: "Ask me anything", voice: "Read replies aloud",
+    day: "DAY", night: "NIGHT", rwyCap: "RWY 19 · CLEARED TO LAND",
+  },
+};
+const U = () => UI[LANG];
+
+// ---------------------------------------------------------------- ตัวช่วย
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function tx(v, L = LANG) {
+  if (v == null) return "";
+  if (typeof v === "string" || typeof v === "number") return String(v);
+  if (Array.isArray(v)) return v;
+  const out = v[L] ?? v.th ?? v.en;
+  return out == null ? "" : out;
+}
+const plain = (v, L) => String(tx(v, L)).replace(/\[([^\]]*)\]/g, "$1");
+const hasPh = (v, L) => /\[[^\]]+\]/.test(String(tx(v, L)));
+function fmt(v, L) {
+  return esc(tx(v, L)).replace(/\[([^\]]+)\]/g, (_m, inner) => { PH++; return `<span class="ph" title="${esc(U().phTip)}">${inner}</span>`; });
+}
+function svgTxt(v) { if (hasPh(v)) { PH++; return `<tspan class="ph-t">${esc(plain(v))}</tspan>`; } return esc(plain(v)); }
+const num = (v) => parseFloat(String(tx(v)).replace(/[^\d.\-]/g, ""));
+const list = (v) => (Array.isArray(v) ? v : []);
+const owner = (L = LANG) => plain(A.ownerCall || C.nickname || "", L) || (L === "en" ? "the owner" : "เจ้าของเว็บ");
+const ownerFmt = (L = LANG) => fmt(A.ownerCall || C.nickname || "", L);
+
+function img(src, alt, kind, cls = "") {
+  if (!src) return phImg(kind, "", cls);
+  return `<img src="${esc(src)}" alt="${esc(alt)}" loading="lazy" data-kind="${kind}" class="${cls}">`;
+}
+function phImg(kind, src, cls = "") {
+  const icon = kind === "person" ? ICON.person : ICON.photo;
+  const name = src ? String(src).split("/").pop() : "";
+  return `<div class="phimg ${cls}" role="img" aria-label="${esc(U().imgMissing)}">${icon}<span>${esc(U().imgMissing)}${name ? "<br>" + esc(name) : ""}</span></div>`;
+}
+function armImages(root = document) {
+  $$("img[data-kind]", root).forEach((el) => {
+    if (el.dataset.armed) return;
+    el.dataset.armed = "1";
+    const fail = () => {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = phImg(el.dataset.kind, el.getAttribute("src"), el.className);
+      el.replaceWith(tmp.firstElementChild);
+    };
+    el.addEventListener("error", fail, { once: true });
+    el.addEventListener("load", () => el.classList.add("ok"), { once: true });
+    if (el.complete && el.naturalWidth > 0) el.classList.add("ok");
+    else if (el.complete && el.getAttribute("src")) fail();
+  });
+}
+function barcode(seed) {
+  let h = 2166136261;
+  for (const ch of String(seed)) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; }
+  let x = 0, bars = "";
+  for (let i = 0; i < 64 && x < 300; i++) {
+    h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
+    const w = 1 + (h % 4), gap = 1 + ((h >>> 8) % 3);
+    bars += `<rect x="${x}" y="0" width="${w}" height="56"/>`;
+    x += w + gap;
+  }
+  return `<svg class="barcode" viewBox="0 0 ${x} 56" preserveAspectRatio="none" fill="currentColor" aria-hidden="true">${bars}</svg>`;
+}
+
+// ---------------------------------------------------------------- หน้าปัดเครื่องวัด
+function gauge(st) {
+  const cx = 75, cy = 75, R = 58;
+  const P = (deg, r = R) => [cx + r * Math.cos(deg * Math.PI / 180), cy + r * Math.sin(deg * Math.PI / 180)];
+  const arc = (a0, a1, r = R) => {
+    const [x0, y0] = P(a0, r), [x1, y1] = P(a1, r);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  };
+  let body = `<circle class="g-face" cx="75" cy="75" r="70"/>`;
+  const label = fmt(st.label), note = st.note ? fmt(st.note) : "";
+  if (st.type === "level") {
+    const scale = list(st.scale).length ? st.scale : ["A1", "A2", "B1", "B2", "C1", "C2"];
+    const cur = plain(st.value).trim().toUpperCase();
+    const idx = scale.findIndex((s) => String(s).toUpperCase() === cur);
+    const n = scale.length, span = 270 / n;
+    scale.forEach((s, i) => {
+      const a0 = 135 + i * span + 2, a1 = 135 + (i + 1) * span - 2;
+      body += `<path class="g-seg${i <= idx ? " on" : ""}" d="${arc(a0, a1, 56)}"/>`;
+      const [tx_, ty_] = P((a0 + a1) / 2, 40);
+      body += `<text class="g-num" x="${tx_.toFixed(1)}" y="${(ty_ + 3).toFixed(1)}" text-anchor="middle">${esc(s)}</text>`;
+    });
+    body += `<text class="g-big" x="75" y="86">${svgTxt(st.value)}</text><text class="g-cap" x="75" y="104">LEVEL</text>`;
+  } else {
+    const max = Number(st.max) || 4, v = Math.max(0, Math.min(max, num(st.value) || 0));
+    const dec = Number.isFinite(st.decimals) ? st.decimals : 2;
+    const steps = max <= 5 ? max * 2 : 10;
+    for (let i = 0; i <= steps; i++) {
+      const a = 135 + 270 * i / steps, major = max <= 5 ? i % 2 === 0 : i % 2 === 0;
+      const [x0, y0] = P(a, major ? 60 : 63), [x1, y1] = P(a, 69);
+      body += `<line class="g-tick${major ? " major" : ""}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/>`;
+      if (major) {
+        const [nx, ny] = P(a, 49);
+        const val = max * i / steps;
+        body += `<text class="g-num" x="${nx.toFixed(1)}" y="${(ny + 3).toFixed(1)}" text-anchor="middle">${Number.isInteger(val) ? val : val.toFixed(1)}</text>`;
+      }
+    }
+    const av = 135 + 270 * (v / max);
+    if (v > 0) body += `<path class="g-arc" d="${arc(135, Math.max(135.5, av), 64)}"/>`;
+    body += `<line class="g-needle" style="--a:${(av).toFixed(1)}deg" x1="75" y1="75" x2="128" y2="75"/><circle class="g-hub" cx="75" cy="75" r="4.5"/>`;
+    const shown = Number.isFinite(num(st.value)) ? num(st.value).toFixed(dec) : plain(st.value);
+    body += `<text class="g-val" x="75" y="112">${hasPh(st.value) ? (PH++, `<tspan class="ph-t">${esc(shown)}</tspan>`) : esc(shown)}</text><text class="g-cap" x="75" y="125">/ ${max.toFixed(dec > 0 ? Math.min(dec, 2) : 0)}</text>`;
+  }
+  return `<div class="gauge"><svg viewBox="0 0 150 150" role="img" aria-label="${esc(plain(st.label))}: ${esc(plain(st.value))}">${body}</svg><span class="lbl">${label}</span>${note ? `<span class="note">${note}</span>` : ""}</div>`;
+}
+
+// ---------------------------------------------------------------- แต่ละช่วงบิน
+const SECTIONS = [
+  { id: "preflight", code: "PRE", phase: "PRE-FLIGHT" },
+  { id: "taxi", code: "TXI", phase: "TAXI" },
+  { id: "takeoff", code: "TKO", phase: "TAKEOFF" },
+  { id: "climb", code: "CLB", phase: "CLIMB" },
+  { id: "cruise", code: "CRZ", phase: "CRUISE" },
+  { id: "approach", code: "APP", phase: "APPROACH" },
+  { id: "landing", code: "LDG", phase: "LANDING" },
+];
+
+const RENDER = {
+  preflight() {
+    const stats = list(C.stats), skills = list(C.skills);
+    if (!tx(C.about) && !stats.length && !skills.length) return "";
+    const cl = skills.length ? `<aside class="checklist" aria-label="${esc(U().checklist)}">
+        <header><span>SKILLS CHECKLIST${LANG === "th" ? `<span class="th">${esc(U().checklist)}</span>` : ""}</span><span>✓ COMPLETE</span></header>
+        ${skills.map((g) => `<div class="cl-group"><h3>${fmt(g.group)}</h3>${list(g.items).map((it) =>
+          `<div class="cl-row"><span class="nm">${fmt(it.name)}</span><span class="lead" aria-hidden="true"></span><span class="st">${fmt(it.status || "✓")}</span></div>`).join("")}</div>`).join("")}
+      </aside>` : "";
+    return `<div class="pf"><div>${tx(C.about) ? `<p class="about">${fmt(C.about)}</p>` : ""}
+      ${stats.length ? `<div class="gauges">${stats.map(gauge).join("")}</div>` : ""}</div>${cl}</div>`;
+  },
+  taxi() {
+    const ed = list(C.education);
+    if (!ed.length) return "";
+    return `<div class="taxi">${ed.map((e, i) => `<article class="taxi-item"><span class="sign" aria-hidden="true">${String.fromCharCode(65 + i)}</span>
+      <div class="yrs">${fmt(e.years)}</div><h3>${fmt(e.title)}</h3><div class="place">${fmt(e.place)}</div>${e.detail ? `<p class="detail">${fmt(e.detail)}</p>` : ""}</article>`).join("")}</div>`;
+  },
+  takeoff() {
+    const w = C.whyAviation || {};
+    const pts = list(w.points);
+    if (!tx(w.text) && !pts.length) return "";
+    return `${tx(w.text) ? `<p class="why">${fmt(w.text)}</p>` : ""}
+      ${pts.length ? `<div class="calls">${pts.map((p) => `<div class="call"><div class="c">${esc(p.call || "")}</div><h3>${fmt(p.title)}</h3><p>${fmt(p.text)}</p></div>`).join("")}</div>` : ""}`;
+  },
+  climb() {
+    const lg = list(C.logbook), gal = list(C.gallery);
+    if (!lg.length && !gal.length) return "";
+    const L = U().log;
+    const total = lg.reduce((s, r) => s + (Number(r.hours) || 0), 0);
+    const table = lg.length ? `<div class="logwrap"><table class="log"><thead><tr>
+        <th>DATE<small>${esc(L.date)}</small></th><th>ACTIVITY<small>${esc(L.act)}</small></th><th>ORGANIZER<small>${esc(L.org)}</small></th>
+        <th>ROLE<small>${esc(L.role)}</small></th><th class="n">HRS<small>${esc(L.hrs)}</small></th><th>REMARKS<small>${esc(L.rem)}</small></th></tr></thead><tbody>
+        ${lg.map((r, i) => `<tr><td class="d" data-l="${esc(L.date)}">${fmt(r.date)}</td><td class="t" data-l="${esc(L.act)}">${fmt(r.title)}</td>
+          <td data-l="${esc(L.org)}">${fmt(r.org)}</td><td data-l="${esc(L.role)}">${fmt(r.role)}</td>
+          <td class="n" data-l="${esc(L.hrs)}">${Number(r.hours) ? Number(r.hours).toFixed(0) : "–"}</td>
+          <td data-l="${esc(L.rem)}">${fmt(r.remarks)}${r.image ? `<br><button type="button" class="icon-btn" data-lb-src="${esc(r.image)}" data-lb-cap="${esc(plain(r.title))}">${ICON.photo}${esc(L.photo)}</button>` : ""}</td></tr>`).join("")}
+        </tbody><tfoot><tr><td colspan="4">TOTAL HOURS${LANG === "th" ? ` <span class="th">· ${esc(L.total)}</span>` : ""}</td><td class="n">${total.toFixed(0)}</td><td></td></tr></tfoot></table></div>` : "";
+    const g = gal.length ? `<h3 class="sub">${esc(U().gallery)}</h3><div class="gal">${gal.map((p) =>
+        `<button type="button" class="shot" data-lb-src="${esc(p.src)}" data-lb-cap="${esc(plain(p.caption))}">${img(p.src, plain(p.caption), "photo")}<span>${fmt(p.caption)}</span></button>`).join("")}</div>` : "";
+    return table + g;
+  },
+  cruise() {
+    const pr = list(C.projects), aw = list(C.awards);
+    if (!pr.length && !aw.length) return "";
+    const feat = pr.filter((p) => p.featured), rest = pr.filter((p) => !p.featured);
+    const media = (p) => {
+      if (p.airi) {
+        return `<div class="feature-media" data-airi-media data-src="${esc(p.image || "")}"><div class="gridbg"></div>
+          <img class="airi-cut" src="${esc(A.image || "images/airi.png")}" alt="${esc(plain(p.title))}" data-kind="photo">
+          <span class="hudtag"><i></i>AIRI.EXE // ONLINE</span></div>`;
+      }
+      return `<div class="feature-media">${img(p.image, plain(p.title), "photo")}</div>`;
+    };
+    const btns = (p) => `<div class="cta" style="margin-top:4px">${p.airi ? `<button type="button" class="btn primary" data-open-airi>${ICON.chat}${esc(U().talk)}</button>` : ""}
+      ${p.link ? `<a class="btn" href="${esc(p.link)}" target="_blank" rel="noopener">${ICON.ext}${esc(U().link)}</a>` : ""}</div>`;
+    const hl = (p) => { const h = list(tx(p.highlights)); return h.length ? `<ul class="hl">${h.map((x) => `<li><span>${fmt(x)}</span></li>`).join("")}</ul>` : ""; };
+    const tags = (p) => list(p.tags).length ? `<div class="tags">${p.tags.map((t) => `<span class="tag">${fmt(t)}</span>`).join("")}</div>` : "";
+    let html = "";
+    if (pr.length) html += `<h3 class="sub" style="margin-top:0">${esc(U().projects)}</h3>`;
+    html += feat.map((p) => `<article class="feature">${media(p)}<div class="feature-body"><h3>${fmt(p.title)}</h3><p>${fmt(p.summary)}</p>${hl(p)}${tags(p)}${btns(p)}</div></article>`).join("");
+    if (rest.length) html += `<div class="proj-grid">${rest.map((p) => `<article class="proj">${img(p.image, plain(p.title), "photo")}<div class="proj-b"><h3>${fmt(p.title)}</h3><p>${fmt(p.summary)}</p>${hl(p)}${tags(p)}${(p.link || p.airi) ? btns(p) : ""}</div></article>`).join("")}</div>`;
+    if (aw.length) html += `<h3 class="sub" id="awards">${esc(U().awards)}</h3><div class="awards">${aw.map((a) =>
+        `<button type="button" class="award" data-lb-src="${esc(a.image || "")}" data-lb-cap="${esc(plain(a.title))}">${img(a.image, plain(a.title), "photo")}<span><span class="yr">${fmt(a.year)}</span><b>${fmt(a.title)}</b><small>${fmt(a.by)}</small></span></button>`).join("")}</div>`;
+    return html;
+  },
+  approach() {
+    const gs = list(C.goals);
+    if (!gs.length) return "";
+    return `<div class="route" style="--n:${gs.length}">${gs.map((g, i) => `<div class="wpt${i === gs.length - 1 ? " dest" : ""}"><span class="eta">${fmt(g.eta)}</span><h3>${fmt(g.title)}</h3><p>${fmt(g.text)}</p></div>`).join("")}</div>`;
+  },
+  landing() {
+    const c = C.contact || {};
+    const rows = [];
+    const add = (k, v, href, label) => { if (v) rows.push({ k, v, href, label }); };
+    const val = (v) => plain(v).trim();
+    add("EMAIL", tx(c.email), c.email && !hasPh(c.email) ? "mailto:" + val(c.email) : "");
+    add("PHONE", tx(c.phone), c.phone && !hasPh(c.phone) ? "tel:" + val(c.phone).replace(/[^\d+]/g, "") : "");
+    add("LINE", tx(c.line), "");
+    add("INSTAGRAM", tx(c.instagram), c.instagram && !hasPh(c.instagram) ? "https://instagram.com/" + val(c.instagram).replace(/^@/, "") : "");
+    add("FACEBOOK", tx(c.facebook), c.facebook && /^https?:/.test(val(c.facebook)) ? val(c.facebook) : "");
+    add("GITHUB", tx(c.github), c.github && /^https?:/.test(val(c.github)) ? val(c.github) : "");
+    add("LOCATION", tx(c.location), "");
+    if (!rows.length && !tx(C.closing)) return "";
+    return `<div class="piano" aria-hidden="true"></div><div class="tower">
+      <div class="freqs"><header><span>TOWER · FREQUENCIES${LANG === "th" ? ` <span class="th">${esc(U().freq)}</span>` : ""}</span><span>${esc(plain(C.callsign) || "")}</span></header>
+      ${rows.map((r) => `<div class="freq"><span class="k">${r.k}</span><span class="v">${r.href ? `<a href="${esc(r.href)}"${/^https?:/.test(r.href) ? ' target="_blank" rel="noopener"' : ""}>${fmt(r.v)}</a>` : fmt(r.v)}</span>
+        <span class="acts"><button type="button" class="icon-btn" data-copy="${esc(plain(r.v))}" aria-label="${esc(U().copy)} ${r.k}">${ICON.copy}<span>${esc(U().copy)}</span></button></span></div>`).join("")}
+      </div>
+      <div>${tx(C.closing) ? `<p class="closing">${fmt(C.closing)}</p>` : ""}<div class="rwy" aria-hidden="true">19<small>${esc(U().rwyCap)}</small></div></div></div>`;
+  },
+};
+
+function renderHero() {
+  const b = C.boarding || {};
+  const name = fmt(C.name), role = fmt(C.role), target = fmt(C.target);
+  const checks = ["SYSTEMS", "NAV DATA", "AIRI ONLINE", "CLEARED FOR TAKEOFF"];
+  $("#hero").innerHTML = `<div class="hero-copy">
+      <p class="eyebrow">CALLSIGN · ${fmt(C.callsign || "")}</p>
+      <h1 class="hero-name">${name}</h1>
+      <p class="hero-role"><span>${role}</span>${tx(C.target) ? `<span class="arrow">→</span><span>${target}</span>` : ""}</p>
+      ${tx(C.tagline) ? `<p class="hero-tag">${fmt(C.tagline)}</p>` : ""}
+      <div class="cta"><a class="btn primary" href="#${firstSection()}">${ICON.down}${esc(U().start)}</a><button type="button" class="btn" data-open-airi>${ICON.chat}${esc(U().talk)}</button></div>
+      <ul class="checks" aria-label="pre-flight">${checks.map((c, i) => `<li style="--i:${i}">${c}</li>`).join("")}</ul>
+    </div>
+    <article class="pass paper" aria-label="${esc(U().pass)}">
+      <div class="pass-main">
+        <div class="pass-head"><b>BOARDING PASS</b><span>${esc(U().pass)}</span></div>
+        <div class="pass-body">
+          <figure class="pass-photo">${img(C.photo, plain(C.name), "person")}</figure>
+          <div style="min-width:0"><div class="pass-pax"><span class="pk">PASSENGER${LANG === "th" ? ` <span class="th">· ${esc(U().applicant)}</span>` : ""}</span><b>${name}</b></div>
+            <div class="route-row"><div class="apt"><b>${fmt(b.from || "HOME")}</b><small>${fmt(C.school)}</small></div>
+              <div class="leg">${ICON.plane}</div>
+              <div class="apt to"><b>${fmt(b.to || "AVN")}</b><small>${fmt(C.target)}</small></div></div></div>
+        </div>
+        <dl class="pass-fields"><div><dt>FLIGHT</dt><dd>${fmt(b.flight || "—")}</dd></div><div><dt>GATE</dt><dd>${fmt(b.gate || "—")}</dd></div>
+          <div><dt>SEAT</dt><dd>${fmt(b.seat || "—")}</dd></div><div><dt>BOARDING</dt><dd>${fmt(b.date || "—")}</dd></div></dl>
+      </div>
+      <div class="pass-stub"><div><span class="pk">CALLSIGN</span><b>${fmt(C.callsign || "—")}</b></div>
+        <div><span class="pk">SEAT</span><b>${fmt(b.seat || "—")}</b></div>${barcode(plain(C.name) + plain(b.flight))}</div>
+    </article>`;
+  const d = new Date();
+  const z = (n) => String(n).padStart(2, "0");
+  $("#metar").innerHTML = `<span>METAR VTBS ${z(d.getUTCDate())}${z(d.getUTCHours())}00Z 19006KT <b>CAVOK</b> 28/22 Q1010 NOSIG</span><span aria-hidden="true">·</span><span class="th">${esc(U().metarTip)}</span>`;
+}
+
+function firstSection() { const s = $("main .sec"); return s ? s.id : "top"; }
+
+function render() {
+  PH = 0;
+  document.documentElement.lang = LANG;
+  let n = 0, html = "";
+  const shown = [];
+  for (const s of SECTIONS) {
+    const body = RENDER[s.id]();
+    if (!body) continue;
+    n++;
+    shown.push(s);
+    html += `<section class="sec${n % 2 === 0 ? " alt" : ""}" id="${s.id}" data-code="${s.code}"><div class="wrap">
+      <header class="sec-head"><p class="phase"><span class="fix" aria-hidden="true"></span>${String(n).padStart(2, "0")} · ${s.phase}<span class="rule" aria-hidden="true"></span></p>
+      <h2>${esc(U().phases[s.id])}</h2><p class="sec-sub">${esc(U().subs[s.id])}</p></header>${body}</div></section>`;
+  }
+  $("#main").innerHTML = html;
+  renderHero();
+  $("#fpl").innerHTML = shown.map((s) => `<li><a href="#${s.id}" data-sec="${s.id}"><span class="wp" aria-hidden="true"></span><span class="code">${s.code}</span><span class="nm">${esc(U().navShort[s.id])}</span></a></li>`).join("")
+    + `<li class="plane" id="plane" aria-hidden="true">${ICON.plane}</li>`;
+  // หัวเว็บ + ท้ายเว็บ
+  const cs = plain(C.callsign);
+  $("#brandName").innerHTML = cs && !hasPh(C.callsign) ? esc(cs) : (hasPh(C.callsign) ? fmt(C.callsign) : "PORTFOLIO");
+  const nm = plain(C.name);
+  document.title = nm && !hasPh(C.name) ? `${nm} · Flight Deck Portfolio` : "Flight Deck Portfolio";
+  $("#foot").innerHTML = `<span>© ${new Date().getFullYear() + (LANG === "th" ? 543 : 0)} ${fmt(C.name)} · ${esc(U().footer)} ${fmt(C.target)}</span><span><span class="mono">SQUAWK 7000</span> · ${esc(U().airiNote)}</span>`;
+  armImages();
+  // ส่วนภาพไอริในการ์ดผลงาน: ถ้าใส่รูปโปรเจกต์เองให้ใช้รูปนั้น
+  $$("[data-airi-media]").forEach((m) => {
+    const src = m.dataset.src;
+    if (!src) return;
+    const probe = new Image();
+    probe.onload = () => { m.innerHTML = `<img src="${esc(src)}" alt="">`; };
+    probe.src = src;
+  });
+  // แถบเตือนโหมดร่าง
+  const dr = $("#draft");
+  if (PH > 0) {
+    dr.innerHTML = `<div class="wrap"><b>DRAFT</b><span>${esc(U().draft(PH))}</span><button type="button">${LANG === "en" ? "Hide" : "ซ่อน"}</button></div>`;
+    dr.hidden = false;
+    $("button", dr).onclick = () => { dr.hidden = true; try { sessionStorage.setItem("fdp:draft", "1"); } catch (e) { /* ignore */ } };
+    try { if (sessionStorage.getItem("fdp:draft") === "1") dr.hidden = true; } catch (e) { /* ignore */ }
+  } else dr.hidden = true;
+  // ปุ่ม
+  $$("#langSeg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === LANG)));
+  $("#langSeg").hidden = C.bilingual === false;
+  updateNav();
+  airiI18n();
+}
+
+// ---------------------------------------------------------------- นำทาง + เครื่องบินบนแผนการบิน
+let navTick = false;
+function updateNav() {
+  const links = $$("#fpl a");
+  if (!links.length) return;
+  const secs = links.map((a) => document.getElementById(a.dataset.sec)).filter(Boolean);
+  const y = window.scrollY + 110;
+  let cur = -1;
+  secs.forEach((s, i) => { if (s.offsetTop <= y) cur = i; });
+  links.forEach((a, i) => { a.classList.toggle("on", i === cur); a.classList.toggle("done", i < cur); if (i === cur) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
+  const plane = $("#plane"), ol = $("#fpl");
+  if (plane && ol) {
+    const pts = links.map((a) => a.parentElement.offsetLeft + a.parentElement.offsetWidth / 2);
+    let x = pts[0];
+    if (cur >= 0) {
+      const s = secs[cur], next = secs[cur + 1];
+      const frac = next ? Math.max(0, Math.min(1, (y - s.offsetTop) / Math.max(1, next.offsetTop - s.offsetTop))) : 0;
+      x = pts[cur] + (pts[Math.min(cur + 1, pts.length - 1)] - pts[cur]) * frac;
+    }
+    plane.style.left = x + "px";
+  }
+  const fpl = $(".fpl");
+  const on = $("#fpl a.on");
+  if (on && fpl.scrollWidth > fpl.clientWidth) fpl.scrollLeft = on.parentElement.offsetLeft - fpl.clientWidth / 2;
+}
+window.addEventListener("scroll", () => { if (!navTick) { navTick = true; requestAnimationFrame(() => { navTick = false; updateNav(); }); } }, { passive: true });
+window.addEventListener("resize", () => updateNav());
+
+function goTo(id, flash = true) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  if (flash) { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+}
+
+// ---------------------------------------------------------------- ปุ่มต่างๆ
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-open-airi]");
+  if (t) { e.preventDefault(); openAiri(); return; }
+  const lb = e.target.closest("[data-lb-src]");
+  if (lb) { openLightbox(lb.dataset.lbSrc, lb.dataset.lbCap); return; }
+  const cp = e.target.closest("[data-copy]");
+  if (cp) { copyText(cp); return; }
+  const lang = e.target.closest("#langSeg [data-lang]");
+  if (lang) { LANG = lang.dataset.lang; store.set("lang", LANG); render(); return; }
+});
+function copyText(btn) {
+  const text = btn.dataset.copy;
+  const done = (ok) => {
+    const s = $("span", btn);
+    if (s) { s.textContent = ok ? U().copied : U().selectHint; setTimeout(() => { s.textContent = U().copy; }, 1800); }
+  };
+  const selectIt = () => {
+    const v = btn.closest(".freq")?.querySelector(".v");
+    if (v) { const r = document.createRange(); r.selectNodeContents(v); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+    done(false);
+  };
+  try {
+    navigator.clipboard.writeText(text).then(() => done(true), selectIt);
+  } catch (e) { selectIt(); }
+}
+function openLightbox(src, cap) {
+  const box = $("#lb");
+  const im = $("#lbImg");
+  if (!src) return;
+  const pre = new Image();
+  pre.onload = () => {
+    im.src = src;
+    im.alt = cap || "";
+    $("#lbCap").textContent = cap || "";
+    box.hidden = false;
+    $("#lbX").focus();
+  };
+  pre.src = src;
+}
+$("#lbX").onclick = () => { $("#lb").hidden = true; };
+$("#lb").addEventListener("click", (e) => { if (e.target.id === "lb") $("#lb").hidden = true; });
+
+// โหมดไฟห้องนักบิน
+function setPanel(mode) {
+  const day = mode === "day";
+  if (day) document.documentElement.setAttribute("data-panel", "day");
+  else document.documentElement.removeAttribute("data-panel");
+  $("#panelSwitch").setAttribute("aria-pressed", String(day));
+  $("#panelLbl").textContent = day ? "DAY" : "NIGHT";
+  store.set("panel", mode);
+  hero && hero.redraw();
+}
+$("#panelSwitch").onclick = () => setPanel(document.documentElement.getAttribute("data-panel") === "day" ? "night" : "day");
+
+// ---------------------------------------------------------------- ฉากรันเวย์ตอนบินเข้าลงจอด + HUD
+let hero = null;
+function startHero() {
+  const cv = $("#hudCanvas");
+  const ctx = cv.getContext("2d");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let W = 0, H = 0, stars = [], city = [], visible = true, last = 0;
+  const t0 = performance.now();
+  const rnd = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+  function size() {
+    const r = cv.getBoundingClientRect();
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = Math.max(1, r.width); H = Math.max(1, r.height);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    stars = Array.from({ length: Math.round(W * H / 5200) }, () => ({ x: rnd() * W, y: rnd() * H * 0.5, r: rnd() * 1.2 + 0.2, p: rnd() * 6.28, s: 0.6 + rnd() * 1.6 }));
+    city = Array.from({ length: Math.round(W / 6) }, () => ({ x: rnd() * W, d: rnd(), c: rnd() }));
+  }
+  const day = () => document.documentElement.getAttribute("data-panel") === "day";
+  function draw(t) {
+    const D = day();
+    const hud = D ? "rgba(6,105,140,.9)" : "rgba(110,235,255,.92)";
+    const hudSoft = D ? "rgba(6,105,140,.45)" : "rgba(110,235,255,.42)";
+    const cx = W * (W > 900 ? 0.465 : 0.5), hy = H * 0.3;
+    const f = 1.55 * Math.max(W, 760), camH = 31, z0 = 600, z1 = 3600;
+    const roll = Math.sin(t * 0.32) * 0.011 + Math.sin(t * 0.11) * 0.006;
+    const bob = Math.sin(t * 0.7) * 1.6;
+    ctx.clearRect(0, 0, W, H);
+    // ท้องฟ้า
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    if (D) { g.addColorStop(0, "#8ebfe6"); g.addColorStop(0.4, "#d9ebf8"); g.addColorStop(0.41, "#c5d1da"); g.addColorStop(1, "#aab8c3"); }
+    else { g.addColorStop(0, "#02060f"); g.addColorStop(0.38, "#0c1d3a"); g.addColorStop(0.41, "#060d1a"); g.addColorStop(1, "#03070f"); }
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.translate(cx, hy + bob); ctx.rotate(roll); ctx.translate(-cx, -hy);
+    if (!D) {
+      for (const s of stars) {
+        const a = 0.35 + 0.35 * Math.sin(t * s.s + s.p);
+        ctx.fillStyle = `rgba(220,235,255,${a.toFixed(3)})`;
+        ctx.fillRect(s.x, s.y, s.r, s.r);
+      }
+      const glow = ctx.createRadialGradient(cx, hy, 0, cx, hy, W * 0.6);
+      glow.addColorStop(0, "rgba(255,170,90,.16)"); glow.addColorStop(1, "rgba(255,170,90,0)");
+      ctx.fillStyle = glow; ctx.fillRect(-W, hy - H, W * 3, H * 1.2);
+      for (const c of city) {
+        const y = hy + 2 + c.d * c.d * 16;
+        ctx.fillStyle = c.c > 0.7 ? "rgba(255,200,120,.55)" : "rgba(255,236,200,.35)";
+        ctx.fillRect(c.x, y, 1.4, 1.2);
+      }
+    }
+    const X = (x, z) => cx + f * x / z, Y = (z) => hy + f * camH / z;
+    // พื้นรันเวย์
+    ctx.beginPath();
+    ctx.moveTo(X(-22.5, z0), Y(z0)); ctx.lineTo(X(22.5, z0), Y(z0)); ctx.lineTo(X(22.5, z1), Y(z1)); ctx.lineTo(X(-22.5, z1), Y(z1)); ctx.closePath();
+    ctx.fillStyle = D ? "rgba(70,80,92,.85)" : "rgba(14,22,36,.95)"; ctx.fill();
+    // แถบเปียโนหัวรันเวย์ + เส้นกลาง
+    ctx.fillStyle = D ? "rgba(255,255,255,.85)" : "rgba(200,215,235,.22)";
+    for (let i = 0; i < 8; i++) for (const side of [-1, 1]) {
+      const x0 = side * (3 + i * 2.3), x1 = x0 + side * 1.6;
+      ctx.beginPath(); ctx.moveTo(X(x0, z0 + 6), Y(z0 + 6)); ctx.lineTo(X(x1, z0 + 6), Y(z0 + 6)); ctx.lineTo(X(x1, z0 + 66), Y(z0 + 66)); ctx.lineTo(X(x0, z0 + 66), Y(z0 + 66)); ctx.fill();
+    }
+    ctx.strokeStyle = D ? "rgba(255,255,255,.8)" : "rgba(200,215,235,.28)";
+    for (let z = z0 + 120; z < z1; z += 50) { ctx.lineWidth = Math.max(0.5, f * 0.9 / z); ctx.beginPath(); ctx.moveTo(X(0, z), Y(z)); ctx.lineTo(X(0, z + 30), Y(z + 30)); ctx.stroke(); }
+    const light = (x, z, col, k = 1) => {
+      const y = Y(z), px = X(x, z);
+      if (y > H + 4 || px < -10 || px > W + 10) return;
+      const r = Math.max(0.6, Math.min(5, f * 0.32 * k / z));
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(px, y, r, 0, 6.283); ctx.fill();
+      if (!D && r > 1.2) { ctx.globalAlpha = 0.18; ctx.beginPath(); ctx.arc(px, y, r * 3, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1; }
+    };
+    const edge = D ? "rgba(255,255,240,.9)" : "rgba(255,244,214,.95)";
+    for (let z = z0; z <= z1; z += 60) { light(-23.5, z, edge); light(23.5, z, edge); }
+    for (let x = -21; x <= 21; x += 3) { light(x, z0 - 2, D ? "rgba(40,200,120,.9)" : "rgba(80,255,150,.95)"); light(x, z1 + 2, D ? "rgba(220,60,60,.9)" : "rgba(255,80,80,.9)"); }
+    // ไฟนำร่อง + ไฟวิ่ง (rabbit)
+    const bars = [];
+    for (let d = 30; d <= 900; d += 30) bars.push(z0 - d);
+    for (const z of bars) {
+      if (z < 25) continue;
+      for (const x of [-4, -2, 0, 2, 4]) light(x, z, edge, 0.9);
+      if (Math.abs(z0 - z - 300) < 1) for (let x = -15; x <= 15; x += 2.5) light(x, z, edge, 0.9);
+    }
+    const seq = ((t * 2) % 1);
+    const vis = bars.filter((z) => z >= 25 && Y(z) < H + 4);
+    if (vis.length && !D) {
+      const k = Math.floor((1 - seq) * vis.length);
+      const z = vis[Math.min(vis.length - 1, Math.max(0, k))];
+      ctx.shadowColor = "rgba(255,255,255,.9)"; ctx.shadowBlur = 18;
+      light(0, z, "rgba(255,255,255,1)", 2.4);
+      ctx.shadowBlur = 0;
+    }
+    // PAPI (ขาว 2 แดง 2 = อยู่บนแนวร่อนพอดี)
+    const papi = ["#fff8e8", "#fff8e8", "#ff4a4a", "#ff4a4a"];
+    papi.forEach((c, i) => light(-(40 + (3 - i) * 9), z0 + 300, c, 1.5));
+    ctx.restore();
+
+    // ---------- สัญลักษณ์ HUD
+    ctx.save();
+    ctx.strokeStyle = hud; ctx.fillStyle = hud; ctx.lineWidth = 1.4;
+    ctx.font = `500 11px "IBM Plex Mono", monospace`;
+    ctx.translate(cx, hy + bob); ctx.rotate(roll);
+    const deg = f * Math.tan(Math.PI / 180);
+    const hl = Math.min(W * 0.3, 380);
+    ctx.beginPath(); ctx.moveTo(-hl, 0); ctx.lineTo(-60, 0); ctx.moveTo(60, 0); ctx.lineTo(hl, 0); ctx.stroke();
+    for (const p of [-10, -5, 5, 10]) {
+      const y = -p * deg, w = p % 10 === 0 ? 70 : 48;
+      if (hy + y < 78 || hy + y > H - 12) continue;  // ไม่ทับเทปทิศด้านบน
+      ctx.setLineDash(p < 0 ? [6, 5] : []);
+      ctx.beginPath(); ctx.moveTo(-w - 40, y); ctx.lineTo(-40, y); ctx.lineTo(-40, y + (p > 0 ? 7 : -7)); ctx.moveTo(40, y + (p > 0 ? 7 : -7)); ctx.lineTo(40, y); ctx.lineTo(w + 40, y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillText(String(Math.abs(p)), w + 46, y + 4); ctx.fillText(String(Math.abs(p)), -w - 62, y + 4);
+    }
+    // สัญลักษณ์แนวบิน (flight path vector) ตรงจุดเล็งลงจอด
+    const fy = 3 * deg + Math.sin(t * 0.9) * 1.5, fx = Math.sin(t * 0.5) * 3;
+    ctx.beginPath(); ctx.arc(fx, fy, 7, 0, 6.283); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(fx - 21, fy); ctx.lineTo(fx - 7, fy); ctx.moveTo(fx + 7, fy); ctx.lineTo(fx + 21, fy); ctx.moveTo(fx, fy - 7); ctx.lineTo(fx, fy - 15); ctx.stroke();
+    ctx.restore();
+    // เทปความเร็ว/ความสูง/ทิศ (ไม่เอียงตามเครื่อง)
+    ctx.save();
+    ctx.strokeStyle = hudSoft; ctx.fillStyle = hud; ctx.lineWidth = 1.2;
+    ctx.font = `500 11px "IBM Plex Mono", monospace`;
+    const hdg = 193 + Math.sin(t * 0.27) * 0.6, top = 26, span = Math.min(300, W * 0.36);
+    ctx.beginPath(); ctx.moveTo(cx - span / 2, top + 14); ctx.lineTo(cx + span / 2, top + 14); ctx.stroke();
+    for (let h = Math.floor(hdg - 15); h <= hdg + 15; h++) {
+      const x = cx + (h - hdg) * (span / 30);
+      if (h % 5 !== 0) continue;
+      ctx.beginPath(); ctx.moveTo(x, top + 14); ctx.lineTo(x, top + (h % 10 === 0 ? 4 : 9)); ctx.stroke();
+      if (h % 10 === 0) { ctx.textAlign = "center"; ctx.fillText(String(((h % 360) + 360) % 360 / 10).padStart(2, "0"), x, top + 28); }
+    }
+    ctx.strokeStyle = hud; ctx.beginPath(); ctx.moveTo(cx - 6, top - 4); ctx.lineTo(cx, top + 4); ctx.lineTo(cx + 6, top - 4); ctx.stroke();
+    ctx.textAlign = "left";
+    if (W > 520) ctx.fillText("ILS 19 · GS ●  LOC ●", cx + span / 2 + 18, top + 18);
+    ctx.restore();
+  }
+  function loop(now) {
+    if (!visible || document.hidden) return;
+    if (now - last > 33) { last = now; draw((now - t0) / 1000); }
+    requestAnimationFrame(loop);
+  }
+  size(); draw(0);
+  if (!reduce) {
+    new IntersectionObserver((es) => { const v = es[0].isIntersecting; if (v && !visible) { visible = true; requestAnimationFrame(loop); } else visible = v; }).observe(cv);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden && visible) requestAnimationFrame(loop); });
+    requestAnimationFrame(loop);
+  }
+  let rt;
+  window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { size(); draw((performance.now() - t0) / 1000); }, 120); });
+  return { redraw: () => draw((performance.now() - t0) / 1000) };
+}
+
+// ================================================================ ไอริ — ตอบจากข้อมูลในพอร์ต (ไม่ต้องใช้ API key)
+const TH_RE = /[฀-๿]/;
+const normTh = (s) => String(s || "").toLowerCase().normalize("NFC").replace(/[\s\u200b\u00a0.,!?¿'"“”‘’()[\]{}\-_:;~…\/\\|*+=@#$%^&<>]+/g, "");
+function keyHit(raw, nq, key) {
+  return String(key).replace(/^~/, "").split("+").every((part) => {
+    if (TH_RE.test(part)) return nq.includes(normTh(part));
+    const k = part.trim().toLowerCase();
+    if (!k) return false;
+    const e = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp("(^|[^a-z0-9])" + e + (k.length <= 3 ? "($|[^a-z0-9])" : ""), "i").test(raw);
+  });
+}
+function scoreKeys(raw, nq, keys) {
+  let s = 0, strong = 0;
+  for (const k of keys) {
+    if (!keyHit(raw, nq, k)) continue;
+    const weak = String(k).startsWith("~");
+    s += normTh(k.replace(/^~/, "")).length * (weak ? 0.4 : 1);
+    if (!weak) strong++;
+  }
+  return s + (strong > 1 ? 2 * (strong - 1) : 0);
+}
+const pickL = (q) => (TH_RE.test(q) ? "th" : /[a-z]/i.test(q) ? "en" : LANG);
+const join = (arr, L) => {
+  const a = arr.filter(Boolean);
+  if (a.length <= 1) return a.join("");
+  return L === "en" ? a.slice(0, -1).join(", ") + " and " + a[a.length - 1] : a.slice(0, -1).join(" ") + " และ" + a[a.length - 1];
+};
+const sections = () => $$("main .sec").map((s) => s.id);
+
+function builtins() {
+  return [
+    { id: "greet", keys: ["สวัสดี", "หวัดดี", "ดีจ้า", "ทักทาย", "hello", "hi", "hey", "good morning", "good afternoon", "good evening", "sawasdee"],
+      a: (L) => ({ t: L === "en" ? `Hello! I'm Airi, ${owner(L)}'s AI assistant. What would you like to know?` : `สวัสดีค่ะ! หนูชื่อไอริ ผู้ช่วย AI ของ${owner(L)} อยากรู้เรื่องไหนถามได้เลยนะคะ`, chips: true }) },
+    { id: "who_airi", keys: ["ไอริคือใคร", "ไอริ+ใคร", "เธอคือใคร", "คุณคือใคร", "เธอเป็นใคร", "ไอริ+คืออะไร", "ไอริ+เป็นคน", "เป็นคนจริง", "เป็นบอท", "หุ่นยนต์", "เธอชื่ออะไร", "คุณชื่ออะไร", "ชื่อเธอคือ", "ชื่อของเธอ", "ชื่อของคุณ", "your name", "who are you", "what are you", "who is airi", "what is airi", "are you+ai", "are you+bot", "are you+real"],
+      a: (L) => ({ t: L === "en" ? `I'm Airi, an AI VTuber that ${owner(L)} built as a personal project. At home I talk by voice, sing and join Discord calls. Here, I answer questions about ${owner(L)} using the information on this site.` : `หนูคือไอริ AI VTuber ที่${owner(L)}สร้างเป็นโปรเจกต์ส่วนตัวค่ะ ปกติหนูคุยด้วยเสียง ร้องเพลง และเข้าห้อง Discord ได้ แต่บนเว็บนี้หนูทำหน้าที่ตอบคำถามเกี่ยวกับ${owner(L)}จากข้อมูลในหน้านี้ค่ะ`, go: "cruise" }) },
+    { id: "airi_project", keys: ["สร้างไอริ", "ทำไอริ", "ไอริ+ทำยังไง", "ไอริ+สร้าง", "ไอริ+ทำอะไรได้", "ไอริทำอะไร", "vtuber", "how+built", "how+made", "made you", "built you", "what can you do"],
+      a: (L) => {
+        const p = list(C.projects).find((x) => x.airi);
+        const hl = p ? list(tx(p.highlights, L)).slice(0, 3).map((x) => plain(x, L)) : [];
+        return { t: (L === "en" ? `${owner(L)} built me with Python. ` : `${owner(L)}สร้างหนูด้วย Python ค่ะ `) + (hl.length ? (L === "en" ? "Highlights: " : "ไฮไลต์คือ ") + hl.join(L === "en" ? "; " : " · ") : ""), go: "cruise" };
+      } },
+    { id: "name", keys: ["ชื่ออะไร", "ชื่อจริง", "ชื่อเล่น", "นามสกุล", "~ชื่อ", "full name", "his name", "her name", "owner+name", "called"],
+      a: (L) => ({ t: L === "en" ? `${owner(L)}'s full name is ${plain(C.name, L)} (nickname: ${plain(C.nickname, L)}).` : `${owner(L)}ชื่อ ${plain(C.name, L)} ค่ะ ชื่อเล่น ${plain(C.nickname, L)}`, go: "preflight" }) },
+    { id: "about", keys: ["แนะนำตัว", "~เล่าเรื่อง", "เป็นคนยังไง", "นิสัย", "~ประวัติ", "~เกี่ยวกับ", "~เป็นใคร", "introduce", "~about", "~tell me about", "~who is", "~yourself"],
+      a: (L) => ({ t: plain(C.about, L) || (L === "en" ? `${owner(L)} hasn't written an introduction yet.` : `${owner(L)}ยังไม่ได้เขียนแนะนำตัวเลยค่ะ`), go: "preflight" }) },
+    { id: "education", keys: ["เรียนที่ไหน", "โรงเรียน", "การศึกษา", "เรียนอะไร", "สายการเรียน", "แผนการเรียน", "จบจาก", "มัธยม", "ม.6", "school", "study", "studying", "education", "graduate"],
+      a: (L) => {
+        const ed = list(C.education).map((e) => `${plain(e.title, L)} — ${plain(e.place, L)} (${plain(e.years, L)})`);
+        return { t: (L === "en" ? `${owner(L)} studies at ${plain(C.school, L)}. ` : `ตอนนี้${owner(L)}เรียนอยู่ที่ ${plain(C.school, L)} ค่ะ `) + (ed.length ? (L === "en" ? "Education: " : "ประวัติการศึกษา: ") + ed.join(L === "en" ? "; " : " · ") : ""), go: "taxi" };
+      } },
+    { id: "grades", keys: ["เกรด", "gpax", "gpa", "ผลการเรียน", "คะแนน", "grade", "grades", "score", "scores"],
+      a: (L) => {
+        const s = list(C.stats).map((x) => `${plain(x.label, L)} ${plain(x.value, L)}${x.type === "dial" && x.max ? "/" + x.max : ""}`);
+        return { t: s.length ? (L === "en" ? `Here are ${owner(L)}'s numbers: ` : `ผลการเรียนของ${owner(L)}ค่ะ: `) + s.join(L === "en" ? ", " : " · ") : (L === "en" ? "No grades listed yet." : "ยังไม่ได้ใส่ผลการเรียนค่ะ"), go: "preflight" };
+      } },
+    { id: "english", keys: ["ภาษาอังกฤษ", "อังกฤษ", "toeic", "ielts", "toefl", "cefr", "english", "speak english", "~language", "~ภาษา"],
+      a: (L) => {
+        const st = list(C.stats).find((x) => /eng|อังกฤษ/i.test(plain(x.label, "en") + plain(x.label, "th")));
+        const langs = (list(C.skills).find((g) => /lang|ภาษา/i.test(plain(g.group, "en") + plain(g.group, "th"))) || {}).items;
+        const ls = list(langs).map((i) => `${plain(i.name, L)} (${plain(i.status, L)})`);
+        let t = st ? (L === "en" ? `${owner(L)}'s English level is ${plain(st.value, L)}${st.note ? " — " + plain(st.note, L) : ""}. ` : `ภาษาอังกฤษของ${owner(L)}อยู่ระดับ ${plain(st.value, L)}${st.note ? " (" + plain(st.note, L) + ")" : ""} ค่ะ `) : "";
+        if (ls.length) t += (L === "en" ? "Languages: " : "ภาษาที่ใช้ได้: ") + ls.join(L === "en" ? ", " : " · ");
+        return { t: t || (L === "en" ? "Language details aren't listed yet." : "ยังไม่ได้ใส่ข้อมูลภาษาค่ะ"), go: "preflight" };
+      } },
+    { id: "why", keys: ["ทำไม+บิน", "ทำไม+นักบิน", "ทำไม+การบิน", "ทำไมอยาก", "แรงบันดาลใจ", "เหตุผล", "สนใจการบิน", "ทำไม+เลือก", "why+aviation", "why+pilot", "why+fly", "why+flying", "motivation", "inspire", "inspiration", "why do you want"],
+      a: (L) => {
+        const w = C.whyAviation || {};
+        const pts = list(w.points).map((p) => plain(p.title, L)).filter(Boolean);
+        return { t: (plain(w.text, L) || "") + (pts.length ? (L === "en" ? ` Key moments: ${pts.join(" → ")}.` : ` จุดสำคัญ: ${pts.join(" → ")}`) : ""), go: "takeoff" };
+      } },
+    { id: "target", keys: ["คณะ", "มหาวิทยาลัย", "มหาลัย", "ยื่น", "สมัคร", "อยากเข้า", "สาขา", "faculty", "university", "program", "apply", "applying", "major"],
+      a: (L) => ({ t: L === "en" ? `${owner(L)} is applying to ${plain(C.target, L)}.` : `${owner(L)}ตั้งใจยื่นเข้า ${plain(C.target, L)} ค่ะ`, go: "takeoff" }) },
+    { id: "activities", keys: ["กิจกรรม", "ประสบการณ์", "ค่าย", "จิตอาสา", "ทำอะไรมาบ้าง", "~ชั่วโมง", "activit", "experience", "volunteer", "camp", "logbook"],
+      a: (L) => {
+        const lg = list(C.logbook);
+        const hrs = lg.reduce((s, r) => s + (Number(r.hours) || 0), 0);
+        const t3 = lg.slice(0, 3).map((r) => plain(r.title, L));
+        return { t: lg.length ? (L === "en" ? `${owner(L)} has logged ${lg.length} activities (${hrs} hours), including ${join(t3, L)}.` : `${owner(L)}บันทึกกิจกรรมไว้ ${lg.length} รายการ รวม ${hrs} ชั่วโมงค่ะ เช่น ${join(t3, L)}`) : (L === "en" ? "No activities listed yet." : "ยังไม่ได้ใส่กิจกรรมค่ะ"), go: "climb" };
+      } },
+    { id: "projects", keys: ["ผลงาน", "โปรเจกต์", "โปรเจค", "โครงงาน", "สร้างอะไร", "~portfolio", "project", "~work", "~built"],
+      a: (L) => {
+        const pr = list(C.projects).map((p) => plain(p.title, L));
+        return { t: pr.length ? (L === "en" ? `Projects: ${pr.join("; ")}. Want me to take you there?` : `ผลงานของ${owner(L)}มี ${pr.join(" · ")} ค่ะ จะให้หนูพาไปดูไหมคะ`) : (L === "en" ? "No projects yet." : "ยังไม่ได้ใส่ผลงานค่ะ"), go: "cruise" };
+      } },
+    { id: "awards", keys: ["รางวัล", "เกียรติบัตร", "ประกาศนียบัตร", "แข่งขัน", "~ชนะ", "award", "certificate", "competition", "prize"],
+      a: (L) => {
+        const aw = list(C.awards).map((a) => `${plain(a.title, L)} (${plain(a.year, L)})`);
+        return { t: aw.length ? (L === "en" ? `Awards: ${aw.join("; ")}.` : `รางวัลและเกียรติบัตร: ${aw.join(" · ")} ค่ะ`) : (L === "en" ? "No awards listed yet." : "ยังไม่ได้ใส่รางวัลค่ะ"), go: "awards" };
+      } },
+    { id: "skills", keys: ["ทักษะ", "ความสามารถ", "ถนัด", "เขียนโปรแกรม", "โค้ด", "skill", "good at", "programming", "coding", "python"],
+      a: (L) => {
+        const gs = list(C.skills).map((g) => `${plain(g.group, L)}: ${list(g.items).map((i) => plain(i.name, L)).join(", ")}`);
+        return { t: gs.length ? (L === "en" ? `Skills checklist — ${gs.join(" | ")}` : `เช็กลิสต์ทักษะของ${owner(L)}ค่ะ — ${gs.join(" | ")}`) : (L === "en" ? "No skills listed yet." : "ยังไม่ได้ใส่ทักษะค่ะ"), go: "preflight" };
+      } },
+    { id: "goals", keys: ["เป้าหมาย", "อนาคต", "ความฝัน", "~แผน", "อยากเป็นอะไร", "จบแล้ว", "กัปตัน", "goal", "future", "dream", "~plan", "career", "captain"],
+      a: (L) => {
+        const gs = list(C.goals).map((g) => `${plain(g.eta, L)} ${plain(g.title, L)}`);
+        return { t: gs.length ? (L === "en" ? `${owner(L)}'s flight plan: ${gs.join(" → ")}.` : `แผนการบินของ${owner(L)}ค่ะ: ${gs.join(" → ")}`) : (L === "en" ? "No goals listed yet." : "ยังไม่ได้ใส่เป้าหมายค่ะ"), go: "approach" };
+      } },
+    { id: "contact", keys: ["ติดต่อ", "อีเมล", "อีเมล์", "เมล", "เบอร์", "โทร", "ไลน์", "ไอจี", "เฟส", "contact", "email", "e-mail", "phone", "call", "reach", "line", "instagram", "facebook", "ig"],
+      a: (L) => {
+        const c = C.contact || {};
+        const rows = [["Email", c.email], ["Phone", c.phone], ["LINE", c.line], ["IG", c.instagram]].filter((r) => r[1]).map((r) => `${r[0]} ${plain(r[1], L)}`);
+        return { t: rows.length ? (L === "en" ? `You can reach ${owner(L)} via ${rows.join(" · ")}.` : `ติดต่อ${owner(L)}ได้ทาง ${rows.join(" · ")} ค่ะ`) : (L === "en" ? "Contact details aren't listed yet." : "ยังไม่ได้ใส่ช่องทางติดต่อค่ะ"), go: "landing" };
+      } },
+    { id: "help", keys: ["ถามอะไรได้", "ช่วยอะไรได้", "ทำอะไรได้บ้าง", "เมนู", "help", "what can i ask", "menu"],
+      a: (L) => ({ t: L === "en" ? "Ask me about the introduction, education, why aviation, activities, projects, awards, goals or contact details. I can also take you to that part of the page." : "ถามหนูได้ทั้งเรื่องแนะนำตัว การศึกษา ทำไมอยากเรียนการบิน กิจกรรม ผลงาน รางวัล เป้าหมาย และช่องทางติดต่อค่ะ หนูพาไปดูส่วนนั้นของหน้าเว็บให้ได้ด้วยนะ", chips: true }) },
+    { id: "thanks", keys: ["ขอบคุณ", "ขอบใจ", "แต๊งกิ้ว", "thank", "thanks", "thx"],
+      a: (L) => ({ t: L === "en" ? `You're welcome! Thank you for your time with ${owner(L)}'s portfolio ✈️` : `ยินดีค่ะ! ขอบคุณที่สละเวลาดูพอร์ตของ${owner(L)}นะคะ ✈️` }) },
+    { id: "bye", keys: ["บาย", "ลาก่อน", "ไปละ", "ไว้เจอกัน", "bye", "goodbye", "see you"],
+      a: (L) => ({ t: L === "en" ? "Bye! Have a smooth flight ✈️" : "บ๊ายบายค่ะ ขอให้บินราบรื่นนะคะ ✈️" }) },
+    { id: "compliment", keys: ["น่ารัก", "เก่งจัง", "เก่งมาก", "สวย", "เจ๋ง", "cute", "cool", "awesome", "amazing", "great job"],
+      a: (L) => ({ t: L === "en" ? `Hehe, thank you! I'll tell ${owner(L)} you said that 😊` : `ฮิฮิ ขอบคุณค่ะ เดี๋ยวหนูบอก${owner(L)}ให้นะคะ 😊` }) },
+    { id: "call", keys: ["~ไอริ", "~airi"],
+      a: (L) => ({ t: L === "en" ? "Yes? I'm here. What would you like to know?" : "คะ? หนูอยู่นี่ค่ะ อยากรู้อะไรถามได้เลยนะคะ", chips: true }) },
+    { id: "joke", keys: ["มุก", "ตลก", "เล่าอะไรสนุก", "joke", "funny"],
+      a: (L) => ({ t: L === "en" ? "Why did the airplane get sent to its room? Bad altitude ✈️ (Sorry, I'll stick to answering questions!)" : "ทำไมเครื่องบินไม่เคยเหงา… เพราะมีหอบังคับการบินคอยคุยด้วยตลอดเลยค่ะ 📡 (มุกแป้กไปไหมคะ 😅)" }) },
+  ];
+}
+function customFaq() {
+  return list(A.faq).map((f, i) => ({ id: "faq" + i, keys: list(f.q), bonus: 3, a: (L) => ({ t: plain(f.a, L), html: fmt(f.a, L), go: f.goto || "" }) }));
+}
+const NAV_WORDS = ["พาไป", "ไปที่", "ไปหน้า", "ไปดู", "เปิดส่วน", "เลื่อนไป", "take me", "go to", "show me", "navigate"];
+function answer(q) {
+  const raw = String(q || "").trim().toLowerCase();
+  const nq = normTh(raw);
+  const L = pickL(q);
+  if (!nq) return null;
+  const intents = [...customFaq(), ...builtins()];
+  let best = null, bestS = 0;
+  for (const it of intents) {
+    const base = scoreKeys(raw, nq, it.keys);
+    const s = base > 0 ? base + (it.bonus || 0) : 0;
+    if (s > bestS) { best = it; bestS = s; }
+  }
+  const wantsNav = NAV_WORDS.some((w) => keyHit(raw, nq, w));
+  if (!best) {
+    return { L, fallback: true, t: L === "en"
+      ? `Hmm, I don't know that one yet. Try asking about ${owner(L)}'s introduction, education, why aviation, projects or contact — or reach ${owner(L)} directly.`
+      : `อุ๊ย เรื่องนี้หนูยังไม่รู้เลยค่ะ 😅 ลองถามเรื่องแนะนำตัว การศึกษา ทำไมอยากเรียนการบิน ผลงาน หรือช่องทางติดต่อดูนะคะ หรือถาม${owner(L)}โดยตรงก็ได้ค่ะ`, chips: true };
+  }
+  const r = best.a(L) || {};
+  return { L, t: r.t || "", html: r.html, go: r.go && sections().concat(["awards"]).includes(r.go) ? r.go : "", chips: r.chips, autoGo: wantsNav && r.go, id: best.id };
+}
+// ป้าย "พาไปดู" ใช้ชื่อหัวข้อตามภาษา
+const goLabel = (id, L) => (id === "awards" ? UI[L].awards : UI[L].navShort[id] || id);
+
+// ---------------------------------------------------------------- หน้าจอไอริ
+const AW = { open: false, busy: false, voice: false, typer: null, bars: null, glitchT: null };
+const SUGGEST = {
+  th: ["แนะนำตัวหน่อย", "ทำไมอยากเรียนการบิน", "มีผลงานอะไรบ้าง", "เรียนที่ไหน", "เป้าหมายในอนาคต", "ติดต่อยังไง", "ไอริคือใคร"],
+  en: ["Introduce yourself", "Why aviation?", "What projects?", "Where do you study?", "Future goals", "How to contact?", "Who is Airi?"],
+};
+function setState(s) {
+  const map = { idle: ["ONLINE", "#00f0ff"], think: ["PROCESSING", "#ffc400"], talk: ["TRANSMITTING", "#ff2bd6"] };
+  const [label, col] = map[s] || map.idle;
+  $("#hudState").textContent = `AIRI.EXE // ${label}`;
+  $("#hudDot").style.background = col;
+  $("#hudDot").style.color = col;
+  clearInterval(AW.bars);
+  const bars = $$("#bars i");
+  if (s === "talk") {
+    AW.bars = setInterval(() => { const lv = Math.floor(3 + Math.random() * 7); bars.forEach((b, i) => { b.style.opacity = (bars.length - 1 - i) < lv ? "0.95" : "0.18"; }); }, 90);
+  } else bars.forEach((b, i) => { b.style.opacity = i > bars.length - 3 ? "0.6" : "0.18"; });
+}
+function chips(L) {
+  const box = $("#chips");
+  box.innerHTML = (SUGGEST[L] || SUGGEST.th).map((c) => `<button type="button" class="chip">${esc(c)}</button>`).join("");
+}
+function addMsg(who, html, go, L) {
+  const log = $("#log");
+  const div = document.createElement("div");
+  div.className = "msg " + who;
+  div.innerHTML = (who === "ai" ? '<span class="who">AIRI</span>' : "") + html
+    + (go ? `<br><button type="button" class="goto" data-go="${esc(go)}">${ICON.go}${esc(L === "en" ? "Take me to " : "พาไปดู ")}${esc(goLabel(go, L))}</button>` : "");
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+const segs = (s) => { try { return Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(s), (x) => x.segment); } catch (e) { return Array.from(s); } };
+function typeOut(text, done) {
+  const box = $("#sub");
+  const parts = segs(text);
+  clearInterval(AW.typer);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) { box.textContent = text; done(); return; }
+  let i = 0;
+  box.textContent = "";
+  setState("talk");
+  AW.typer = setInterval(() => {
+    i = Math.min(parts.length, i + 2);
+    box.textContent = parts.slice(0, i).join("");
+    box.scrollTop = box.scrollHeight;
+    if (i >= parts.length) { clearInterval(AW.typer); setTimeout(() => setState("idle"), 300); done(); }
+  }, 28);
+}
+function speak(text, L) {
+  if (!AW.voice || !("speechSynthesis" in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu, ""));
+    u.lang = L === "en" ? "en-US" : "th-TH";
+    const v = speechSynthesis.getVoices().find((x) => x.lang && x.lang.toLowerCase().startsWith(L === "en" ? "en" : "th"));
+    if (v) u.voice = v;
+    u.pitch = 1.25; u.rate = 1.02;
+    speechSynthesis.speak(u);
+  } catch (e) { /* อ่านออกเสียงไม่ได้ก็ข้ามไป */ }
+}
+function ask(q) {
+  const text = String(q || "").trim().slice(0, 300);
+  if (!text || AW.busy) return;
+  AW.busy = true;
+  addMsg("me", esc(text));
+  const r = answer(text);
+  const L = r ? r.L : LANG;
+  setState("think");
+  $("#sub").innerHTML = '<span class="typing" aria-label="กำลังพิมพ์"><i></i><i></i><i></i></span>';
+  const reply = r ? r.t : "";
+  const delay = 380 + Math.min(1100, reply.length * 9);
+  setTimeout(() => {
+    const plainReply = reply.replace(/\[([^\]]*)\]/g, "$1");
+    typeOut(plainReply, () => {
+      const html = r && r.html ? r.html : (r ? fmtText(reply) : "");
+      addMsg("ai", html, r && r.go, L);
+      AW.busy = false;
+      if (r && r.chips) chips(L);
+      if (r && r.autoGo) setTimeout(() => goFrom(r.go), 500);
+    });
+    speak(plainReply, L);
+  }, delay);
+}
+function fmtText(s) { return esc(s).replace(/\[([^\]]+)\]/g, (_m, x) => `<span class="ph" title="${esc(U().phTip)}">${x}</span>`); }
+function goFrom(id) {
+  if (window.innerWidth < 900) closeAiri();
+  goTo(id);
+}
+function greet() {
+  const L = LANG;
+  const g = String(tx(A.greeting, L) || (L === "en" ? "Hi, I'm Airi! Ask me anything about {owner}." : "สวัสดีค่ะ หนูชื่อไอริ ถามเรื่อง{owner}ได้เลยนะคะ")).replace(/\{owner\}/g, owner(L));
+  const ghtml = fmtText(String(tx(A.greeting, L) || g).replace(/\{owner\}/g, String(tx(A.ownerCall || "", L))));
+  typeOut(g, () => addMsg("ai", ghtml, "", L));
+}
+function openAiri() {
+  const box = $("#airi");
+  if (AW.open) { $("#askInput").focus(); return; }
+  AW.open = true;
+  box.classList.add("open");
+  $("#panel").hidden = false;
+  $("#launch").setAttribute("aria-expanded", "true");
+  $("#bubble").hidden = true;
+  if (!$("#log").children.length) { chips(LANG); greet(); }
+  setTimeout(() => $("#askInput").focus({ preventScroll: true }), 60);
+  glitchLoop();
+}
+function closeAiri() {
+  AW.open = false;
+  $("#airi").classList.remove("open");
+  $("#panel").hidden = true;
+  $("#launch").setAttribute("aria-expanded", "false");
+  clearTimeout(AW.glitchT);
+  try { speechSynthesis.cancel(); } catch (e) { /* ignore */ }
+  $("#launch").focus({ preventScroll: true });
+}
+function glitchLoop() {
+  clearTimeout(AW.glitchT);
+  if (!AW.open || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  AW.glitchT = setTimeout(() => { const f = $("#feed"); f.classList.add("glitch"); setTimeout(() => f.classList.remove("glitch"), 200); glitchLoop(); }, 5000 + Math.random() * 6000);
+}
+const bubbleText = (L) => (L === "en" ? `Hi! I'm Airi. Ask me anything about ${owner("en")} ✈️` : `สวัสดีค่ะ หนูไอริเอง มีอะไรอยากรู้เกี่ยวกับ${owner("th")} ถามหนูได้นะคะ ✈️`);
+function airiI18n() {
+  if (!$("#bubble").hidden) $("#bubbleTxt").textContent = bubbleText(LANG);
+  $("#askInput").placeholder = U().ask;
+  $("#askLbl").textContent = U().send;
+  $("#launchSub").textContent = U().launch;
+  $("#voiceBtn").title = U().voice;
+  if (AW.open && !AW.busy) chips(LANG);
+}
+function initAiri() {
+  const src = A.image || "images/airi.png";
+  const face = $("#faceImg"), big = $("#airiImg");
+  face.src = src; big.src = src;
+  const silhouette = '<svg viewBox="0 0 200 220" style="position:absolute;left:50%;bottom:0;height:92%;transform:translateX(-50%)" aria-hidden="true"><defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00f0ff" stop-opacity=".55"/><stop offset="1" stop-color="#ff2bd6" stop-opacity=".25"/></linearGradient></defs><circle cx="100" cy="70" r="42" fill="url(#sg)"/><path d="M20 220c6-58 40-92 80-92s74 34 80 92z" fill="url(#sg)"/></svg>';
+  big.addEventListener("error", () => { big.insertAdjacentHTML("afterend", silhouette); big.remove(); }, { once: true });
+  face.addEventListener("error", () => { face.remove(); }, { once: true });
+  $("#bars").innerHTML = "<i></i>".repeat(10);
+  setState("idle");
+  $("#launch").onclick = openAiri;
+  $("#closeBtn").onclick = closeAiri;
+  $("#ask").addEventListener("submit", (e) => { e.preventDefault(); const v = $("#askInput").value; $("#askInput").value = ""; ask(v); });
+  $("#chips").addEventListener("click", (e) => { const c = e.target.closest(".chip"); if (c) ask(c.textContent); });
+  $("#log").addEventListener("click", (e) => { const g = e.target.closest("[data-go]"); if (g) goFrom(g.dataset.go); });
+  if ("speechSynthesis" in window) {
+    $("#voiceBtn").hidden = false;
+    $("#voiceBtn").onclick = () => { AW.voice = !AW.voice; $("#voiceBtn").setAttribute("aria-pressed", String(AW.voice)); if (!AW.voice) try { speechSynthesis.cancel(); } catch (e) { /* ignore */ } };
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (!$("#lb").hidden) { $("#lb").hidden = true; return; }
+    if (AW.open) closeAiri();
+  });
+  const tick = () => { const d = new Date(); $("#hudClock").textContent = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+  tick(); setInterval(tick, 15000);
+  // ทักทายเล็กๆ ครั้งแรกที่เปิดเว็บ
+  let seen = false;
+  try { seen = sessionStorage.getItem("fdp:bubble") === "1"; } catch (e) { /* ignore */ }
+  if (!seen) {
+    setTimeout(() => {
+      if (AW.open) return;
+      $("#bubbleTxt").textContent = bubbleText(LANG);
+      $("#bubble").hidden = false;
+    }, 2200);
+  }
+  $("#bubbleX").onclick = () => { $("#bubble").hidden = true; try { sessionStorage.setItem("fdp:bubble", "1"); } catch (e) { /* ignore */ } };
+  $("#bubbleTxt").onclick = openAiri;
+}
+
+// ---------------------------------------------------------------- เริ่ม
+const savedPanel = store.get("panel");
+if (savedPanel === "day") document.documentElement.setAttribute("data-panel", "day");
+$("#panelSwitch").setAttribute("aria-pressed", String(savedPanel === "day"));
+$("#panelLbl").textContent = savedPanel === "day" ? "DAY" : "NIGHT";
+render();
+hero = startHero();
+initAiri();
+if (location.hash && document.getElementById(location.hash.slice(1))) setTimeout(() => goTo(location.hash.slice(1), false), 50);
+window.__airi = { answer, ask, openAiri };
+})();
+</script>
+
+</body>
+</html>
