@@ -14,23 +14,23 @@ window.PORTFOLIO = {
   bilingual: true,       // มีปุ่มสลับ TH / EN
 
   // ----------------------------------------------------------------- ตัวตน
-  name: { th: "[ชื่อ นามสกุล]", en: "[Firstname Lastname]" },
-  nickname: { th: "[ชื่อเล่น]", en: "[Nickname]" },
-  callsign: "[CALLSIGN]",                 // ชื่อเรียกขานภาษาอังกฤษสั้นๆ เช่น STAMP · NOVA · ใช้บนบัตรขึ้นเครื่อง
+  name: { th: "กวีกร เพ็งโคนา", en: "Kaweekoen Pengcona" },
+  nickname: { th: "กอล์ฟ", en: "Golf" },
+  callsign: "542G",                  // ชื่อเรียกขานภาษาอังกฤษสั้นๆ เช่น STAMP · NOVA · ใช้บนบัตรขึ้นเครื่อง
   role: { th: "ผู้สมัครคณะการบิน", en: "Aviation Applicant" },
   tagline: {
-    th: "[ประโยคสั้นๆ ที่บอกว่าคุณคือใคร เช่น นักเรียนที่หลงใหลการบินและชอบสร้างเทคโนโลยี]",
-    en: "[One line about you, e.g. A student who loves flight and builds technology]",
+    th: "สวัสดีครับ ผมเป็นนักเรียนที่รักการบินและสร้างเทคโนโลยีต่างๆ และจะชอบพุ่งไปในสิ่งที่ตัวเองสนใจ",
+    en: "Hello, I am a student who loves aviation and creating various technologies, and I enjoy diving into things that interest me.",
   },
   photo: "images/profile.jpg",           // รูปหน้าตรงของคุณ (แนวตั้ง 3:4 สวยสุด)
 
-  school: { th: "[ชื่อโรงเรียน]", en: "[School name]" },
-  target: { th: "[คณะ / สาขาที่ยื่น · มหาวิทยาลัย]", en: "[Faculty / Program · University]" },
+  school: { th: "นวมินทราชินูทิศ สตรีวิทยา 2", en: "nawaminthrachinuthit satriwitthaya 2" },
+  target: { th: "หลักสูตรวิศวกรรมการบินและนักบินพาณิชย์ · สจล.", en: "IAAI · KMITL." },
 
   // บัตรขึ้นเครื่อง (รหัส 3 ตัวอักษรแบบสนามบิน — ตั้งเองได้ตามใจ)
   boarding: {
-    from: "[SCH]",          // ตัวย่อโรงเรียน
-    to: "[AVN]",            // ตัวย่อคณะ/มหาวิทยาลัย
+    from: "NMRSW2",          // ตัวย่อโรงเรียน
+    to: "IAAI",            // ตัวย่อคณะ/มหาวิทยาลัย
     flight: "TCAS69",
     gate: "A1",
     seat: "01A",
@@ -39,8 +39,8 @@ window.PORTFOLIO = {
 
   // ----------------------------------------------------------------- แนะนำตัว (PRE-FLIGHT)
   about: {
-    th: "[เขียนแนะนำตัว 3–5 ประโยค: เป็นใคร เรียนสายอะไร นิสัยแบบไหน และอะไรทำให้สนใจการบิน]",
-    en: "[Introduce yourself in 3–5 sentences: who you are, what you study, your personality, and what drew you to aviation]",
+    th: "สวัดดีครับ ผมนายกวีกร เพ็งโคนา ชื่อเล่นกอล์ฟ เป็นนักเรียนชั้นมัธยมศึกษาตอนปลายที่รักการบินและเทคโนโลยี ผมสนใจด้านวิศวกรรมการบินและเทคโนโลยี ซึ่งเป็นสิ่งที่ผมหลงใหลมาตั้งแต่เด็ก ความคิดสร้างสรรค์และความมุ่งมั่นในการเรียนรู้เป็นส่วนหนึ่งของบุคลิกภาพของผม และผมหวังว่าจะได้มีโอกาสพัฒนาทักษะเหล่านี้ในอนาคต",
+    en: "Hello, my name is Kaweekoen Pengcona, nicknamed Golf. I am a high school student who loves aviation and technology. I am interested in aviation engineering and technology, which has been my passion since childhood. Creativity and a strong desire to learn are part of my personality, and I hope to have the opportunity to further develop these skills in the future.",
   },
 
   // หน้าปัดเครื่องวัด  type: "dial" = ตัวเลขเทียบเต็ม · "level" = ระดับขั้น (เช่น CEFR)
@@ -48,7 +48,7 @@ window.PORTFOLIO = {
     { type: "dial", label: { th: "เกรดเฉลี่ยสะสม", en: "GPAX" }, value: "[3.50]", max: 4, decimals: 2, note: { th: "[ภาคเรียนล่าสุด]", en: "[latest term]" } },
     { type: "level", label: { th: "ภาษาอังกฤษ", en: "English" }, value: "[B2]", scale: ["A1", "A2", "B1", "B2", "C1", "C2"], note: { th: "[เช่น TOEIC 750]", en: "[e.g. TOEIC 750]" } },
     { type: "dial", label: { th: "ฟิสิกส์", en: "Physics" }, value: "[3.5]", max: 4, decimals: 1, note: { th: "[เกรดวิชาฟิสิกส์]", en: "[physics grade]" } },
-    { type: "dial", label: { th: "คณิตศาสตร์", en: "Mathematics" }, value: "[3.5]", max: 4, decimals: 1, note: { th: "[เกรดวิชาคณิต]", en: "[math grade]" } },
+    { type: "dial", label: { th: "คณิตศาสตร์", en: "Mathematics" }, value: "[4]", max: 4, decimals: 1, note: { th: "[เกรดวิชาคณิต]", en: "[math grade]" } },
   ],
 
   // เช็กลิสต์ทักษะ  status = ระดับ/คำสั้นๆ ที่แสดงท้ายบรรทัด
@@ -65,25 +65,25 @@ window.PORTFOLIO = {
       group: { th: "เทคโนโลยี", en: "Technology" },
       items: [
         { name: "Python", status: "PROJECT" },
-        { name: { th: "AI / LLM (Gemini API)", en: "AI / LLM (Gemini API)" }, status: "PROJECT" },
+        { name: { th: "AI / LLM", en: "AI / LLM" }, status: "PROJECT" },
         { name: "Live2D · VTube Studio API", status: "PROJECT" },
-        { name: { th: "บอท Discord", en: "Discord bots" }, status: "PROJECT" },
+        { name: { th: "ROBOTIC", en: "Discord bots" }, status: "WRG" },
       ],
     },
     {
       group: { th: "การบิน", en: "Aviation" },
       items: [
-        { name: { th: "[อ่านรายงานอากาศ METAR]", en: "[Reading METAR weather reports]" }, status: "[BASIC]" },
-        { name: { th: "[ตัวอักษรวิทยุ ALFA–ZULU]", en: "[Phonetic alphabet ALFA–ZULU]" }, status: "[FLUENT]" },
-        { name: { th: "[เครื่องจำลองการบิน]", en: "[Flight simulator]" }, status: "[50 HRS]" },
+        { name: { th: "การบินจริง", en: "Actual flying" }, status: "Cessna 172" },
+        { name: { th: "จำลองการบิน", en: "Flight simulator" }, status: "20HRS+" },
+        { name: { th: "การอ่านรายงานอากาศ", en: "Reading METAR weather reports" }, status: "50 HRS" },
       ],
     },
     {
       group: { th: "ทักษะทำงาน", en: "Soft skills" },
       items: [
-        { name: { th: "[ทำงานเป็นทีม]", en: "[Teamwork]" }, status: "✓" },
-        { name: { th: "[ภาวะผู้นำ]", en: "[Leadership]" }, status: "✓" },
-        { name: { th: "[ตัดสินใจภายใต้ความกดดัน]", en: "[Decisions under pressure]" }, status: "✓" },
+        { name: { th: "ทำงานเป็นทีม", en: "Teamwork" }, status: "✓" },
+        { name: { th: "ภาวะผู้นำ", en: "Leadership" }, status: "✓" },
+        { name: { th: "ตัดสินใจภายใต้ความกดดัน", en: "Decisions under pressure" }, status: "✓" },
       ],
     },
   ],
@@ -92,28 +92,28 @@ window.PORTFOLIO = {
   education: [
     {
       years: "[2566–2569]",
-      title: { th: "[มัธยมศึกษาตอนปลาย · แผนวิทย์–คณิต]", en: "[Upper secondary · Science–Math]" },
-      place: { th: "[ชื่อโรงเรียน]", en: "[School name]" },
-      detail: { th: "[เกรดเฉลี่ย / วิชาที่ถนัด / ตำแหน่งในโรงเรียน]", en: "[GPA / strong subjects / school roles]" },
+      title: { th: "มัธยมศึกษาตอนปลาย · แผนวิทย์–คณิต(เตรียมวิศวกรรม)", en: "Upper secondary · Science–Math (Pre-Engineering)" },
+      place: { th: "นวมินทราชินูทิศ สตรีวิทยา 2", en: "nawaminthrachinuthit satriwitthaya 2" },
+      detail: { th: "3.50 / Math&IOT / Drone pilot", en: "3.50 / Math&IOT / Drone pilot" },
     },
     {
       years: "[2563–2566]",
-      title: { th: "[มัธยมศึกษาตอนต้น]", en: "[Lower secondary]" },
-      place: { th: "[ชื่อโรงเรียน]", en: "[School name]" },
-      detail: { th: "[สิ่งที่โดดเด่นช่วงนี้]", en: "[Highlights from this period]" },
+      title: { th: "มัธยมศึกษาตอนต้น · MEP", en: "Lower secondary · MEP" },
+      place: { th: "นวมินทราชินูทิศ สตรีวิทยา 2", en: "nawaminthrachinuthit satriwitthaya 2" },
+      detail: { th: "Music&Codeing", en: "Music&Codeing" },
     },
   ],
 
   // ----------------------------------------------------------------- แรงบันดาลใจ (TAKEOFF)
   whyAviation: {
     text: {
-      th: "[เล่าว่าทำไมอยากเรียนการบิน — จุดเริ่มต้น ช่วงเวลาที่ตัดสินใจ และสิ่งที่อยากทำให้ได้ 4–6 ประโยค]",
-      en: "[Why aviation — how it started, the moment you decided, and what you want to achieve. 4–6 sentences]",
+      th: "ผมสนใจในด้านเทคโนโลยีเแป็นทุนเดิมอยู่แล้ว และก็ลองมาหลายอย่างแล้ว ทั้ง Codeing, Robotics, AI, Scurity แต่เมื่อผมได้ลองสัมผัสโลกของการบิน ผมก็เริ่มค้นพบตัวเองตั้งแต่ตอนนั้น และตั้งใจพัฒนามาด้านนี่โดยตรง ผมอยากเป็นนักบินที่มีความสามารถด้านเทคโนโลยีควบคู่กันไปด้วย เพื่อที่จะสามารถพัฒนาการบินไทยให้ก้าวหน้าและเป็นที่ทั่วถึงมากขึ้น",
+      en: "I have always been interested in technology, and I have explored various fields such as coding, robotics, AI, and security. However, when I experienced the world of aviation, I discovered my true passion and decided to focus on this field. I aspire to become a pilot with strong technological skills, enabling me to contribute to the advancement and accessibility of aviation in Thailand.",
     },
     points: [
-      { call: "V1", title: { th: "[จุดเริ่มต้น]", en: "[The spark]" }, text: { th: "[เหตุการณ์ที่ทำให้เริ่มสนใจ]", en: "[What first got you interested]" } },
-      { call: "ROTATE", title: { th: "[ช่วงที่ตัดสินใจ]", en: "[The decision]" }, text: { th: "[อะไรทำให้มั่นใจว่าใช่]", en: "[What made you sure]" } },
-      { call: "POSITIVE RATE", title: { th: "[สิ่งที่เตรียมตัวมา]", en: "[How you prepared]" }, text: { th: "[สิ่งที่ทำไปแล้วเพื่อเป้าหมายนี้]", en: "[What you have already done]" } },
+      { call: "V1", title: { th: "การได้เห็นเสน่ห์ของโลกการบิน", en: "The Appeal of the Aviation World" }, text: { th: "ตั้งแต่ผมเด็กๆผมเห็นเครื่องบิน บินผ่านไปมาทุกวันเลยตั้งคำถาม ว่าถ้าผมเป็นคนที่คุมมันได้จะเป็นยังไง", en: "Ever since I was a child, I’ve seen airplanes flying by every day, which led me to wonder: what would it be like if I were the one in control of one?" } },
+      { call: "ROTATE", title: { th: "ด้านนี่มันเวอร์กที่สุดแล้ว", en: "This is the best field for me" }, text: { th: "ในตอน ม.1-ม.3 ผมได้ทำหลายๆอย่างทั้งดนตรีและเทคโนโลยี แต่เมื่อมา ม.4 ผมก็ได้ลงแข่งการแข่งขันต่างๆ แต่ก็คิด...เราไปได้สุดก็จริง แต่มันยังไม่ใช่", en: "I’ve managed to take charge of things for students in grades 7–9 (M.1–M.3) on several occasions—everything from music to dinner events. By the time they reach grades 10–12 (M.4–M.6), they can participate in various types of competitions. While it’s true that we can push them to their absolute best, that’s not the case for the majority." } },
+      { call: "POSITIVE RATE", title: { th: "การได้สัมผัสกับโลกการบิน", en: "Experiencing the Aviation World" }, text: { th: "ตอนแรกผมได้มาที่ Aero admistion camp และก็ได้แนวทางมากมาย ก่อนที่ผมอยากได้สัมผัสกับท้องฟ้ามากกว่านี่และได้ ซื้อโดรนมาเก็บภาพต่างๆจากมุมสูง และผมชอบมันมาก ส้วนหลังจากนั้นผมก็ได้ไปบินจริงๆที่ Bravo flight club ทำให้รู้ว่า...เรามาถูกทางแล้ว", en: "It all started when I attended the Aero Admission Camp, where I gained a wealth of insight. Wanting to experience the skies even more, I bought a drone to capture footage from above—and I absolutely loved it. Later, I had the chance to fly for real at the Bravo Flight Club, which confirmed that I was on the right path." } },
     ],
   },
 
@@ -202,8 +202,9 @@ window.PORTFOLIO = {
 
   // ----------------------------------------------------------------- ไอริ (กล่องถาม-ตอบมุมจอ)
   airi: {
+    endpoint: "https://airi-portfolio.stamp850035.workers.dev/",
     image: "images/airi.png",            // รูปไอริ (พื้นใสสวยสุด) — เอารูปใหม่มาทับไฟล์นี้ได้เลย
-    ownerCall: { th: "พี่[ชื่อเล่น]", en: "[Nickname]" },   // ไอริเรียกคุณว่าอะไร
+    ownerCall: { th: "พี่กอล์ฟ", en: "Golf" },   // ไอริเรียกคุณว่าอะไร
     greeting: {
       th: "สวัสดีค่ะ หนูชื่อไอริ เป็น AI ผู้ช่วยของ{owner} ✈️ อยากรู้อะไรเกี่ยวกับ{owner} พิมพ์ถามหนูได้เลยนะคะ",
       en: "Hi, I'm Airi, {owner}'s AI assistant ✈️ Ask me anything about {owner}!",
