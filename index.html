@@ -1553,7 +1553,67 @@ function typeOut(text, done) {
     if (i >= parts.length) { clearInterval(AW.typer); setTimeout(() => setState("idle"), 300); done(); }
   }, 28);
 }
-function speak(text, L) {
+// เสียงไอริจริง (Fish Audio ผ่านตัวกลาง) · ใช้ไม่ได้ → เสียงอ่านของเบราว์เซอร์
+const TTS = { el: null, url: "", off: false, fails: 0, seq: 0 };
+function ttsUrl() {
+  if (!/^https:\/\//i.test(AI.url) && !/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\//i.test(AI.url)) return "";
+  try { return new URL("tts", AI.url.replace(/\/*$/, "/")).href; } catch (e) { return ""; }
+}
+function silentWav() { // เสียงเงียบสั้นๆ ไว้ปลดล็อกการเล่นเสียงบนมือถือ
+  const n = 400, b = new Uint8Array(44 + n), v = new DataView(b.buffer);
+  const w = (o, t) => { for (let i = 0; i < t.length; i++) b[o + i] = t.charCodeAt(i); };
+  w(0, "RIFF"); v.setUint32(4, 36 + n, true); w(8, "WAVEfmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true);
+  v.setUint16(34, 8, true); w(36, "data"); v.setUint32(40, n, true); b.fill(128, 44);
+  let s = ""; b.forEach((x) => { s += String.fromCharCode(x); });
+  return "data:audio/wav;base64," + btoa(s);
+}
+function ttsUnlock() { // มือถือ (iOS) ให้เล่นเสียงได้เฉพาะ element ที่เคยเล่นตอนผู้ใช้กดปุ่ม
+  if (TTS.el || !ttsUrl()) return;
+  TTS.el = new Audio();
+  TTS.el.preload = "auto";
+  try { TTS.el.src = silentWav(); TTS.el.play().catch(() => {}); } catch (e) { /* ignore */ }
+}
+function stopVoice() {
+  TTS.seq++;
+  try { if (TTS.el) TTS.el.pause(); } catch (e) { /* ignore */ }
+  try { speechSynthesis.cancel(); } catch (e) { /* ignore */ }
+}
+async function speakFish(text, emo) {
+  const url = ttsUrl();
+  if (TTS.off || !url || TTS.fails >= 2) return false;
+  const my = ++TTS.seq;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, signal: ctrl.signal,
+      body: JSON.stringify({ text, emotion: emo || "" }) });
+    if (res.status === 501) { TTS.off = true; return false; }          // ตัวกลางยังไม่ได้ตั้ง Fish
+    if (!res.ok || !String(res.headers.get("Content-Type") || "").includes("audio")) {
+      const d = await res.json().catch(() => null);
+      throw new Error((d && (d.hint || d.error)) || "HTTP " + res.status);
+    }
+    const blob = await res.blob();
+    if (my !== TTS.seq || !AW.voice) return true;                      // ผู้ใช้ปิดเสียง/ถามข้อใหม่ไปแล้ว
+    if (!TTS.el) TTS.el = new Audio();
+    if (TTS.url) URL.revokeObjectURL(TTS.url);
+    TTS.url = URL.createObjectURL(blob);
+    TTS.el.src = TTS.url;
+    await TTS.el.play();
+    TTS.fails = 0;
+    return true;
+  } catch (e) {
+    TTS.fails++;
+    console.info("[ไอริ] เสียง Fish Audio ใช้ไม่ได้ เลยใช้เสียงเบราว์เซอร์แทน:", e && e.message);
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+async function speak(text, L, emo) {
+  if (!AW.voice) return;
+  stopVoice();
+  if (await speakFish(text, emo)) return;
   if (!AW.voice || !("speechSynthesis" in window)) return;
   try {
     speechSynthesis.cancel();
@@ -1589,7 +1649,7 @@ async function ask(q) {
   }
   const spoken = String(out.t).replace(/\[([^\]]*)\]/g, "$1");
   showEmotion(out.emo);
-  speak(spoken, L);
+  speak(spoken, L, out.emo);
   typeOut(spoken, () => {
     addMsg("ai", out.html || fmtText(out.t), out.go, L);
     AI.history.push({ role: "user", text }, { role: "airi", text: spoken });
@@ -1631,7 +1691,7 @@ function closeAiri() {
   $("#panel").hidden = true;
   $("#launch").setAttribute("aria-expanded", "false");
   clearTimeout(AW.glitchT);
-  try { speechSynthesis.cancel(); } catch (e) { /* ignore */ }
+  stopVoice();
   $("#launch").focus({ preventScroll: true });
 }
 function glitchLoop() {
@@ -1662,9 +1722,13 @@ function initAiri() {
   $("#ask").addEventListener("submit", (e) => { e.preventDefault(); const v = $("#askInput").value; $("#askInput").value = ""; ask(v); });
   $("#chips").addEventListener("click", (e) => { const c = e.target.closest(".chip"); if (c) ask(c.textContent); });
   $("#log").addEventListener("click", (e) => { const g = e.target.closest("[data-go]"); if (g) goFrom(g.dataset.go); });
-  if ("speechSynthesis" in window) {
+  if ("speechSynthesis" in window || ttsUrl()) {
     $("#voiceBtn").hidden = false;
-    $("#voiceBtn").onclick = () => { AW.voice = !AW.voice; $("#voiceBtn").setAttribute("aria-pressed", String(AW.voice)); if (!AW.voice) try { speechSynthesis.cancel(); } catch (e) { /* ignore */ } };
+    $("#voiceBtn").onclick = () => {
+      AW.voice = !AW.voice;
+      $("#voiceBtn").setAttribute("aria-pressed", String(AW.voice));
+      if (AW.voice) ttsUnlock(); else stopVoice();
+    };
   }
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
