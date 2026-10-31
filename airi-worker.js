@@ -7,6 +7,12 @@
                                 (127.0.0.1 / localhost อนุญาตให้อยู่แล้ว ไว้ลองกับ Live Server)
      GEMINI_MODEL     (Text)    ไม่ใส่ก็ได้ ค่าเริ่มต้น gemini-3.5-flash-lite (ตัวเดียวกับไอริตัวจริง)
 
+   เสียงไอริจริงด้วย Fish Audio (ไม่บังคับ — ไม่ตั้ง = เว็บใช้เสียงอ่านของเบราว์เซอร์แทน)
+     FISH_API_KEY       (Secret)  คีย์ Fish Audio (fish.audio → API Keys)
+     FISH_REFERENCE_ID  (Text)    ID เสียงไอริ = ค่า tts.fish.reference_id ใน config.yaml ของไอริตัวจริง
+     FISH_MODEL         (Text)    ไม่ใส่ก็ได้ ค่าเริ่มต้น s2.1-pro
+     TTS_PER_DAY        (Text)    ไม่ใส่ก็ได้ เพดานจำนวนครั้งที่พูดต่อวัน ค่าเริ่มต้น 150 (กันเครดิต Fish หมด)
+
    เปิด URL ของ worker ในเบราว์เซอร์ = หน้าเช็กสถานะ (บอกว่าตั้งค่าครบหรือยัง ไม่โชว์คีย์)
    ===================================================================== */
 
@@ -78,6 +84,65 @@ function rateLimited(ip, env) {
   return false;
 }
 
+// ---------------------------------------------------------------- เสียงไอริ (Fish Audio)
+const FISH_URL = "https://api.fish.audio/v1/tts";
+const FISH_TAGS = { happy: "[cheerful]", excited: "[excited]", sad: "[sad]", angry: "[annoyed]",
+  surprised: "[surprised]", shy: "[shy]", thinking: "[thoughtful]", smug: "[playful]" };
+const ttsHits = new Map();
+let ttsToday = { day: "", n: 0 };
+
+function ttsLimited(ip, env) {
+  const now = Date.now();
+  const perMin = 8, perDay = Number(env.TTS_PER_DAY) || 150;
+  const day = new Date(now).toISOString().slice(0, 10);
+  if (ttsToday.day !== day) ttsToday = { day, n: 0 };
+  if (ttsToday.n >= perDay) return true;
+  const list = (ttsHits.get(ip) || []).filter((t) => now - t < 60000);
+  if (list.length >= perMin) { ttsHits.set(ip, list); return true; }
+  list.push(now);
+  ttsHits.set(ip, list);
+  if (ttsHits.size > 5000) for (const k of ttsHits.keys()) { ttsHits.delete(k); if (ttsHits.size < 2500) break; }
+  ttsToday.n++;
+  return false;
+}
+
+async function handleTTS(request, env, cors) {
+  if (!env.FISH_API_KEY || !env.FISH_REFERENCE_ID) return json({ error: "no_tts" }, 501, cors.headers);
+  let body;
+  try {
+    const raw = await request.text();
+    if (raw.length > 4000) return json({ error: "too_big" }, 413, cors.headers);
+    body = JSON.parse(raw);
+  } catch (e) {
+    return json({ error: "bad_json" }, 400, cors.headers);
+  }
+  // ตัดอีโมจิ/แท็ก ไม่ให้ Fish อ่านออกเสียง · จำกัดความยาว = จำกัดค่าใช้จ่าย
+  let text = String(body.text || "").replace(/[⟦[][^\]⟧]*[\]⟧]/g, " ")
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/\s+/g, " ").trim().slice(0, 300);
+  if (!text) return json({ error: "empty" }, 400, cors.headers);
+  if (ttsLimited(request.headers.get("CF-Connecting-IP") || "?", env)) return json({ error: "busy" }, 429, cors.headers);
+  const tag = FISH_TAGS[String(body.emotion || "")];
+  if (tag) text = `${tag} ${text}`;
+
+  let res;
+  try {
+    res = await fetch(FISH_URL, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${env.FISH_API_KEY}`, "model": env.FISH_MODEL || "s2.1-pro", "Content-Type": "application/json" },
+      body: JSON.stringify({ text, reference_id: String(env.FISH_REFERENCE_ID).trim(), format: "mp3", mp3_bitrate: 64,
+        latency: "balanced", temperature: 0.7 }),
+    });
+  } catch (e) {
+    return json({ error: "upstream", detail: "เชื่อม Fish Audio ไม่ได้" }, 502, cors.headers);
+  }
+  if (!res.ok) {
+    const hint = { 401: "FISH_API_KEY ผิด", 402: "เครดิต Fish หมด", 404: "ไม่เจอเสียงนี้ เช็ก FISH_REFERENCE_ID", 429: "เรียกถี่เกินไป" }[res.status] || "";
+    const detail = (await res.text().catch(() => "")).slice(0, 200);
+    return json({ error: "upstream", status: res.status, hint, detail }, 502, cors.headers);
+  }
+  return new Response(res.body, { status: 200, headers: { ...cors.headers, "Content-Type": "audio/mpeg", "Cache-Control": "no-store" } });
+}
+
 const clip = (v, n) => String(v == null ? "" : v).replace(/<\//g, "‹/").slice(0, n);
 
 export default {
@@ -92,12 +157,18 @@ export default {
         `ALLOWED_ORIGINS: ${cors.allow.length ? cors.allow.join(", ") : "ยังไม่ได้ตั้ง ✗ (ใส่ลิงก์เว็บพอร์ต เช่น https://yourname.github.io)"}`,
         `GEMINI_MODEL: ${env.GEMINI_MODEL || DEFAULT_MODEL}`,
         "",
+        `เสียง Fish Audio: ${env.FISH_API_KEY && env.FISH_REFERENCE_ID ? "เปิดแล้ว ✓" : "ปิดอยู่ (ไม่บังคับ) — เว็บจะใช้เสียงอ่านของเบราว์เซอร์"}`,
+        `  FISH_API_KEY: ${env.FISH_API_KEY ? "ตั้งแล้ว ✓" : "ยังไม่ได้ตั้ง"}`,
+        `  FISH_REFERENCE_ID: ${env.FISH_REFERENCE_ID ? "ตั้งแล้ว ✓" : "ยังไม่ได้ตั้ง"}`,
+        `  FISH_MODEL: ${env.FISH_MODEL || "s2.1-pro"} · พูดได้วันละ ${Number(env.TTS_PER_DAY) || 150} ครั้ง`,
+        "",
         "เอา URL ของหน้านี้ไปใส่ใน content.js → airi.endpoint",
       ];
       return new Response(lines.join("\n"), { status: 200, headers: { ...cors.headers, "Content-Type": "text/plain; charset=utf-8" } });
     }
     if (request.method !== "POST") return json({ error: "method" }, 405, cors.headers);
     if (!cors.ok) return json({ error: "origin", detail: "เว็บนี้ยังไม่อยู่ใน ALLOWED_ORIGINS" }, 403, cors.headers);
+    if (new URL(request.url).pathname.replace(/\/+$/, "").endsWith("/tts")) return handleTTS(request, env, cors);
     if (!env.GEMINI_API_KEY) return json({ error: "no_key" }, 500, cors.headers);
     if (rateLimited(request.headers.get("CF-Connecting-IP") || "?", env)) return json({ error: "busy" }, 429, cors.headers);
 
